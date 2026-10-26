@@ -935,7 +935,7 @@ Chromium、Microsoft Word 与 WPS Writer 生成逐页原图、叠加图、热力
 - 项目自有 `build/installer.nsh` 显式创建桌面和开始菜单快捷方式，
   安装完成后直接启动主程序，不依赖 `.lnk`。
 - 卸载时显式清理桌面快捷方式、开始菜单快捷方式及其目录。
-- 安装包和校验文件作为 Gitea `v0.4.3` Release 附件发布，不写入 Git
+- 安装包和校验文件作为 GitHub `v0.4.3` Release 附件发布，不写入 Git
   历史。
 
 ### 3.17 v0.4.4 桌面语言包精简

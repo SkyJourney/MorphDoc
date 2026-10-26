@@ -4,7 +4,7 @@
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循
 [Semantic Versioning](https://semver.org/lang/zh-CN/)。发布时以对应版本章节作为
-Gitea Release 页面正文的基础；构建产物、校验和及详细验收记录可继续写入
+GitHub Release 页面正文的基础；构建产物、校验和及详细验收记录可继续写入
 `docs/releases/v<version>.md`。
 
 ## [Unreleased]
