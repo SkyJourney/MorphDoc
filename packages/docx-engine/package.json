@@ -1,0 +1,39 @@
+{
+  "name": "@morphdoc/docx-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "assets",
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "verify:pandoc": "node scripts/verify-pandoc-reference.mjs",
+    "verify:conversion": "node scripts/verify-pandoc-conversion.mjs",
+    "verify:acceptance": "node scripts/verify-docx-acceptance.mjs",
+    "verify:themes": "node scripts/verify-theme-docx-matrix.mjs"
+  },
+  "dependencies": {
+    "@morphdoc/core": "workspace:*",
+    "@morphdoc/docx-theme-engine": "workspace:*",
+    "@xmldom/xmldom": "0.9.10",
+    "fflate": "0.8.3",
+    "fontverter": "2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "vitest": "^4.1.10"
+  }
+}

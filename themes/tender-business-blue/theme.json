@@ -1,0 +1,52 @@
+{
+  "manifestVersion": 1,
+  "id": "tender-business-blue",
+  "name": "标书正式·商务蓝",
+  "version": "0.5.1",
+  "description": "适合商务标、解决方案和企业投标文件的专业蓝色主题。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "generic",
+  "defaultFontSize": "17px",
+  "supportedFeatures": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+  "category": "tender",
+  "compatibleProfiles": ["tender"],
+  "pageDefaults": {
+    "margins": {
+      "top": "25mm",
+      "right": "25mm",
+      "bottom": "25mm",
+      "left": "30mm"
+    }
+  },
+  "docxStyle": {
+    "preset": "tender",
+    "headings": {
+      "color": "#1f4e79"
+    },
+    "hyperlink": {
+      "color": "#2563eb"
+    }
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "bundled": true
+}

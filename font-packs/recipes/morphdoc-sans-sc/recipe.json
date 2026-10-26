@@ -1,0 +1,71 @@
+{
+  "recipeVersion": 1,
+  "manifestVersion": 1,
+  "id": "morphdoc-sans-sc",
+  "version": "1.0.0",
+  "name": "MorphDoc 中文黑体兼容包",
+  "description": "为现代文档与商务主题提供经过 Word/WPS 验证的原生静态中文黑体 Regular 与 Bold 字形面。",
+  "internalFamily": "MorphDoc Sans SC",
+  "license": "OFL-1.1",
+  "licenseSource": "OFL-NotoSansSC.txt",
+  "licensePath": "OFL-NotoSansSC.txt",
+  "licenseBytes": 4350,
+  "licenseSha256": "5e0da210fb04058a8c0087985d2d456b931c2579811a49655721d3cf0c36b6d6",
+  "noticeSource": "SOURCE.md",
+  "noticePath": "SOURCE.md",
+  "compatibility": {
+    "minimumAppVersion": "0.6.0"
+  },
+  "faces": [
+    {
+      "id": "sans-regular",
+      "targets": [
+        "MorphDoc Sans SC",
+        "FandolHei",
+        "Microsoft YaHei",
+        "PingFang SC",
+        "Noto Sans CJK SC",
+        "Source Han Sans SC"
+      ],
+      "weight": 400,
+      "style": "normal",
+      "web": {
+        "source": "MorphDocSansSC-Regular.woff2",
+        "path": "fonts/MorphDocSansSC-Regular.woff2",
+        "bytes": 4193280,
+        "sha256": "ff1015a1ad58bae221eeaf097744671963e96416a6033a7943a294e07667e0ee"
+      },
+      "docx": {
+        "source": "MorphDocSansSC-Regular.ttf",
+        "path": "fonts/MorphDocSansSC-Regular.ttf",
+        "bytes": 10596704,
+        "sha256": "81b5ec7cf3bc6c0429dc6bf62e9bf77235ab6c25046481a7e3210e476d50539a"
+      }
+    },
+    {
+      "id": "sans-bold",
+      "targets": [
+        "MorphDoc Sans SC",
+        "FandolHei",
+        "Microsoft YaHei",
+        "PingFang SC",
+        "Noto Sans CJK SC",
+        "Source Han Sans SC"
+      ],
+      "weight": 700,
+      "style": "normal",
+      "web": {
+        "source": "MorphDocSansSC-Bold.woff2",
+        "path": "fonts/MorphDocSansSC-Bold.woff2",
+        "bytes": 4314784,
+        "sha256": "2ad391b3b829bcdcc0a7be23582f6858c264414bee7c0e623bc2fc4fc7c151db"
+      },
+      "docx": {
+        "source": "MorphDocSansSC-Bold.ttf",
+        "path": "fonts/MorphDocSansSC-Bold.ttf",
+        "bytes": 10586220,
+        "sha256": "0265f4e65af93e7742ed4db2c694720b4455a2dd13b9c67af8b0cc766a0e87a6"
+      }
+    }
+  ]
+}

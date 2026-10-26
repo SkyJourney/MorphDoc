@@ -1,0 +1,7 @@
+@media print {
+  #write .doc-masthead,
+  #write .doc-title,
+  #write .doc-briefing-contact {
+    break-inside: avoid;
+  }
+}

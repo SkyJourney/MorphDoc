@@ -1,0 +1,89 @@
+import {
+  DOCX_STYLE_SLOT_NAMES,
+  type DocxComputedStyle,
+  type DocxThemeStyleCaptureRequest
+} from "@morphdoc/docx-theme-engine";
+import { describe, expect, it, vi } from "vitest";
+import { captureDocxThemeStyleWithPlaywrightPage } from "../src/playwright-docx-theme-style.js";
+
+const computed: DocxComputedStyle = {
+  fontFamily: "Arial",
+  fontSize: "16px",
+  fontWeight: "400",
+  fontStyle: "normal",
+  color: "rgb(0, 0, 0)",
+  backgroundColor: "rgba(0, 0, 0, 0)",
+  lineHeight: "normal",
+  letterSpacing: "normal",
+  textAlign: "start",
+  direction: "ltr",
+  textIndent: "0px",
+  textDecorationLine: "none",
+  marginTop: "0px",
+  marginRight: "0px",
+  marginBottom: "0px",
+  marginLeft: "0px",
+  paddingTop: "0px",
+  paddingRight: "0px",
+  paddingBottom: "0px",
+  paddingLeft: "0px",
+  borderTop: "0px none rgb(0, 0, 0)",
+  borderRight: "0px none rgb(0, 0, 0)",
+  borderBottom: "0px none rgb(0, 0, 0)",
+  borderLeft: "0px none rgb(0, 0, 0)",
+  width: "640px",
+  maxWidth: "none",
+  minWidth: "0px",
+  minHeight: "0px",
+  height: "24px",
+  breakBefore: "auto",
+  breakAfter: "auto",
+  breakInside: "auto",
+  display: "block",
+  flexDirection: "row",
+  alignItems: "normal",
+  justifyContent: "normal",
+  outline: "rgb(0, 0, 0) none 0px",
+  outlineOffset: "0px"
+};
+
+const request: DocxThemeStyleCaptureRequest = {
+  themeId: "external-clean",
+  themeFingerprint: "a".repeat(64),
+  themeCss: "#write { color: #000; }",
+  baseUrl: "http://localhost:3001/"
+};
+
+describe("Playwright DOCX 主题样式采集", () => {
+  it("使用打印媒体并校验浏览器返回的快照", async () => {
+    const page = {
+      emulateMedia: vi.fn(async () => undefined),
+      evaluate: vi.fn(async () => ({
+        rootFontSizePx: 16,
+        viewport: {
+          widthPx: 794,
+          heightPx: 1123,
+          deviceScaleFactor: 1
+        },
+        slots: DOCX_STYLE_SLOT_NAMES.map((slot) => ({
+          slot,
+          matched: true,
+          computed
+        }))
+      }))
+    };
+    const snapshot =
+      await captureDocxThemeStyleWithPlaywrightPage(
+        page as never,
+        request
+      );
+    expect(page.emulateMedia).toHaveBeenCalledWith({
+      media: "print"
+    });
+    expect(page.evaluate).toHaveBeenCalledTimes(1);
+    expect(snapshot.themeId).toBe("external-clean");
+    expect(snapshot.slots).toHaveLength(
+      DOCX_STYLE_SLOT_NAMES.length
+    );
+  });
+});

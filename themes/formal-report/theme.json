@@ -1,0 +1,44 @@
+{
+  "manifestVersion": 1,
+  "id": "formal-report",
+  "name": "政企正式·工作报告",
+  "version": "0.5.1",
+  "description": "适用于工作总结、年度报告和专题汇报的稳重政务蓝灰主题。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "generic",
+  "defaultFontSize": "18px",
+  "supportedFeatures": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+  "category": "formal",
+  "compatibleProfiles": [],
+  "pageDefaults": {
+    "margins": {
+      "top": "37mm",
+      "right": "26mm",
+      "bottom": "35mm",
+      "left": "28mm"
+    }
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolSong",
+        "aliases": ["FangSong", "STFangsong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["SimHei", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "docxStyle": {
+    "preset": "formal"
+  },
+  "bundled": true
+}

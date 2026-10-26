@@ -1,0 +1,159 @@
+:root {
+  --report-navy: #183b5b;
+  --report-blue: #2f628c;
+  --report-ink: #20262d;
+  --report-muted: #66717b;
+  --report-border: #b9c6d0;
+  --report-soft: #eef4f8;
+}
+
+#write {
+  color: var(--report-ink);
+  font-family:
+    "FandolSong", "Noto Serif CJK SC", "Source Han Serif SC",
+    "Microsoft YaHei", "SimSun", serif;
+  font-size: 18px;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+#write > h1:first-child {
+  margin: 10mm 0 12mm;
+  padding: 0 0 5mm;
+  border-bottom: 1mm solid var(--report-navy);
+  color: var(--report-navy);
+  font-size: 2em;
+  line-height: 1.35;
+  text-align: center;
+}
+
+#write h1,
+#write h2,
+#write h3,
+#write h4 {
+  font-family:
+    "FandolHei", "Noto Sans CJK SC", "Source Han Sans SC",
+    "Microsoft YaHei", sans-serif;
+  font-weight: 700;
+}
+
+#write h1 {
+  margin: 1.8em 0 0.8em;
+  color: var(--report-navy);
+  font-size: 1.6em;
+}
+
+#write h2 {
+  margin: 1.55em 0 0.65em;
+  padding: 0.25em 0.65em;
+  border-left: 0.28em solid var(--report-blue);
+  color: var(--report-navy);
+  background: linear-gradient(90deg, var(--report-soft), transparent);
+  font-size: 1.25em;
+}
+
+#write h3 {
+  margin: 1.3em 0 0.5em;
+  color: #2d4f6b;
+  font-size: 1.08em;
+}
+
+#write h4 {
+  margin: 1.1em 0 0.45em;
+  font-size: 1em;
+}
+
+#write p {
+  margin: 0 0 0.8em;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+#write li > p,
+#write blockquote p,
+#write td p,
+#write th p {
+  text-indent: 0;
+}
+
+#write ul,
+#write ol {
+  margin: 0.55em 0 0.9em;
+  padding-left: 2em;
+}
+
+#write blockquote {
+  margin: 1em 0;
+  padding: 0.8em 1em;
+  border-left: 0.25em solid var(--report-blue);
+  color: #405566;
+  background: var(--report-soft);
+}
+
+#write table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  font-size: 0.88em;
+  line-height: 1.55;
+}
+
+#write th,
+#write td {
+  padding: 0.5em 0.7em;
+  border: 1px solid var(--report-border);
+}
+
+#write th {
+  color: #fff;
+  background: var(--report-navy);
+  font-family:
+    "FandolHei", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  text-align: center;
+}
+
+#write tbody tr:nth-child(even) {
+  background: #f7fafc;
+}
+
+#write a {
+  color: var(--report-blue);
+}
+
+#write code {
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: #eef1f4;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.82em;
+}
+
+#write pre,
+#write .md-fences {
+  margin: 1em 0;
+  padding: 0.9em 1em;
+  overflow: auto;
+  border: 1px solid #d3dbe1;
+  border-radius: 4px;
+  background: #f6f8fa;
+  line-height: 1.6;
+}
+
+#write pre code {
+  padding: 0;
+  background: transparent;
+}
+
+#write img,
+#write svg {
+  max-width: 100%;
+  height: auto;
+}
+
+#write .footnotes {
+  margin-top: 2em;
+  padding-top: 0.8em;
+  border-top: 1px solid var(--report-border);
+  color: var(--report-muted);
+  font-size: 0.82em;
+}

@@ -1,0 +1,53 @@
+{
+  "manifestVersion": 1,
+  "id": "formal-feasibility",
+  "name": "政企正式·可研报告",
+  "version": "0.5.1",
+  "description": "面向项目建议书和可行性研究报告的正式封面与章节排版主题。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "generic",
+  "defaultFontSize": "17px",
+  "supportedFeatures": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+  "category": "formal",
+  "compatibleProfiles": ["project-report"],
+  "pageDefaults": {
+    "margins": {
+      "top": "25mm",
+      "right": "20mm",
+      "bottom": "25mm",
+      "left": "30mm"
+    }
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolSong",
+        "aliases": ["Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Bold.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "SimHei", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "docxStyle": {
+    "preset": "formal"
+  },
+  "bundled": true
+}

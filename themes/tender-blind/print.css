@@ -1,0 +1,10 @@
+@media print {
+  #write .doc-cover-tender {
+    break-after: page;
+  }
+
+  #write .doc-cover-bidder,
+  #write .doc-cover-representative {
+    display: none !important;
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "manifestVersion": 1,
+  "id": "typora-like",
+  "name": "Clean",
+  "version": "0.1.0",
+  "description": "项目自有的简洁技术文档主题，不复制 Typora 官方主题代码。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "typora",
+  "defaultFontSize": "16px",
+  "supportedFeatures": [
+    "code",
+    "table",
+    "task-list",
+    "footnote",
+    "katex",
+    "mermaid"
+  ],
+  "docxStyle": {
+    "preset": "technical"
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "bundled": true
+}

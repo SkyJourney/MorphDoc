@@ -1,0 +1,49 @@
+@media print {
+  #write .doc-masthead,
+  #write .doc-title,
+  #write .doc-signature,
+  #write .doc-edition {
+    break-inside: avoid;
+  }
+
+  .pagedjs_pages > .pagedjs_page:last-child .pagedjs_pagebox {
+    position: relative;
+  }
+
+  .pagedjs_pages > .pagedjs_page:last-child .pagedjs_pagebox::after {
+    position: absolute;
+    right: max(20mm, calc((100% - 170mm) / 2));
+    bottom: 20mm;
+    left: max(20mm, calc((100% - 170mm) / 2));
+    z-index: 3;
+    height: 1.2mm;
+    background:
+      linear-gradient(
+        to bottom,
+        var(--letter-red) 0 0.25mm,
+        transparent 0.25mm 0.55mm,
+        var(--letter-red) 0.55mm 1.2mm
+      );
+    content: "";
+    pointer-events: none;
+  }
+
+  #write[data-document-profile="official"]::after {
+    display: block;
+    width: min(170mm, 100%);
+    height: 1.2mm;
+    margin: 12mm auto 0;
+    background:
+      linear-gradient(
+        to bottom,
+        var(--letter-red) 0 0.25mm,
+        transparent 0.25mm 0.55mm,
+        var(--letter-red) 0.55mm 1.2mm
+      );
+    content: "";
+  }
+
+  .pagedjs_page #write[data-document-profile="official"]::after {
+    content: none;
+  }
+}

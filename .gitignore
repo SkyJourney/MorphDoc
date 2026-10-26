@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.conda_env
+.local/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.serena/
+tmp/
+# 真实语料清单及其测试脚本只保留在本机：文件名含 .local. 的一律不进入仓库
+*.local.*
+playwright-report/
+test-results/
+
+# 构建、门禁与正式发版产物只保留在本机，不进入 Git。
+output/
+/apps/desktop/out/
+/apps/desktop/.runtime/
+/release/
+*.tsbuildinfo

@@ -1,0 +1,63 @@
+{
+  "recipeVersion": 1,
+  "manifestVersion": 1,
+  "id": "morphdoc-serif-sc",
+  "version": "1.0.0",
+  "name": "MorphDoc 中文宋体兼容包",
+  "description": "为政企公文主题提供经过 Word/WPS 验证的原生静态中文宋体 Regular 与 Bold 字形面。",
+  "internalFamily": "MorphDoc Serif SC",
+  "license": "OFL-1.1",
+  "licenseSource": "OFL-NotoSerifSC.txt",
+  "licensePath": "OFL-NotoSerifSC.txt",
+  "licenseBytes": 4350,
+  "licenseSha256": "5e0da210fb04058a8c0087985d2d456b931c2579811a49655721d3cf0c36b6d6",
+  "noticeSource": "SOURCE.md",
+  "noticePath": "SOURCE.md",
+  "compatibility": {
+    "minimumAppVersion": "0.6.0"
+  },
+  "faces": [
+    {
+      "id": "serif-regular",
+      "targets": [
+        "FandolSong",
+        "MorphDoc Fandol Song"
+      ],
+      "weight": 400,
+      "style": "normal",
+      "web": {
+        "source": "MorphDocSerifSC-Regular.woff2",
+        "path": "fonts/MorphDocSerifSC-Regular.woff2",
+        "bytes": 5732852,
+        "sha256": "08b246358bd0cc1572a3d50f58279d7d8601f40d13729ed54e188ac273597d56"
+      },
+      "docx": {
+        "source": "MorphDocSerifSC-Regular.ttf",
+        "path": "fonts/MorphDocSerifSC-Regular.ttf",
+        "bytes": 14854924,
+        "sha256": "e39bf802cc83f4c2e3cd75131b42aa951d4710be8ec46d4d2b8d6f26b01c3bb7"
+      }
+    },
+    {
+      "id": "serif-bold",
+      "targets": [
+        "FandolSong",
+        "MorphDoc Fandol Song"
+      ],
+      "weight": 700,
+      "style": "normal",
+      "web": {
+        "source": "MorphDocSerifSC-Bold.woff2",
+        "path": "fonts/MorphDocSerifSC-Bold.woff2",
+        "bytes": 5925356,
+        "sha256": "708ea25c7c8c27e09d29341a8d9ea47248d02dc1c5e3efe9559e24159c62bf3f"
+      },
+      "docx": {
+        "source": "MorphDocSerifSC-Bold.ttf",
+        "path": "fonts/MorphDocSerifSC-Bold.ttf",
+        "bytes": 14853900,
+        "sha256": "166d533e200cfddad81e05c63fddaa688337e18315cb883e4e9a1d48b6fcb111"
+      }
+    }
+  ]
+}

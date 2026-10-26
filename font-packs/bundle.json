@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "id": "morphdoc-serif-sc",
+      "version": "1.0.0",
+      "recipe": "font-packs/recipes/morphdoc-serif-sc/recipe.json",
+      "sourceRoot": "font-packs/assets/morphdoc-serif-sc/1.0.0"
+    },
+    {
+      "id": "morphdoc-sans-sc",
+      "version": "1.0.0",
+      "recipe": "font-packs/recipes/morphdoc-sans-sc/recipe.json",
+      "sourceRoot": "font-packs/assets/morphdoc-sans-sc/1.0.0"
+    },
+    {
+      "id": "morphdoc-mono",
+      "version": "1.0.0",
+      "recipe": "font-packs/recipes/morphdoc-mono/recipe.json",
+      "sourceRoot": "font-packs/assets/morphdoc-mono/1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+@media print {
+  #write > h1:first-child {
+    break-after: avoid;
+  }
+}

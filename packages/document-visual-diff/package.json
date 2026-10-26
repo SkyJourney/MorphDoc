@@ -1,0 +1,28 @@
+{
+  "name": "@morphdoc/document-visual-diff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "1.0.2",
+    "@types/node": "^24.10.1",
+    "pdfjs-dist": "6.1.200",
+    "vitest": "^4.1.10"
+  }
+}

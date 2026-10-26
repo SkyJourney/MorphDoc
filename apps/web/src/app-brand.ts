@@ -1,0 +1,4 @@
+export const APP_DISPLAY_NAME = __APP_DISPLAY_NAME__;
+export const APP_WINDOW_TITLE = __APP_WINDOW_TITLE__;
+export const APP_SLOGAN = __APP_SLOGAN__;
+export const APP_DESCRIPTION = __APP_DESCRIPTION__;

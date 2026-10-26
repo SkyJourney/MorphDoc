@@ -1,0 +1,5 @@
+@media print {
+  #write .doc-cover-tender {
+    break-after: page;
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@morphdoc/preview-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
+  },
+  "dependencies": {
+    "@morphdoc/core": "workspace:*",
+    "@morphdoc/markdown-echarts": "workspace:*",
+    "@mermaid-js/layout-elk": "0.2.2",
+    "echarts": "6.1.0",
+    "mermaid": "11.16.0",
+    "pagedjs": "^0.4.3"
+  },
+  "devDependencies": {
+    "happy-dom": "20.11.1",
+    "vitest": "^4.1.10"
+  }
+}

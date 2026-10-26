@@ -1,0 +1,171 @@
+:root {
+  --feasibility-navy: #17324d;
+  --feasibility-gold: #b09055;
+  --feasibility-ink: #20252a;
+  --feasibility-muted: #69737c;
+  --feasibility-border: #bbc5cd;
+  --feasibility-soft: #f2f5f7;
+}
+
+#write {
+  color: var(--feasibility-ink);
+  font-family:
+    "FandolSong", "Noto Serif CJK SC", "Source Han Serif SC",
+    "Microsoft YaHei", "SimSun", serif;
+  font-size: 17px;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+#write .doc-cover-project-report {
+  display: flex;
+  min-height: 220mm;
+  padding: 18mm 12mm;
+  border-top: 2mm solid var(--feasibility-navy);
+  border-bottom: 0.7mm solid var(--feasibility-gold);
+  break-after: page;
+  break-inside: avoid;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#write .doc-cover-project-name {
+  margin: 0 0 22mm;
+  color: var(--feasibility-navy);
+  font-size: 1.65em;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#write .doc-cover-title {
+  margin: 0 0 12mm;
+  color: #152c42;
+  font-size: 2.35em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+}
+
+#write .doc-cover-version {
+  margin: 0 0 28mm;
+  color: var(--feasibility-gold);
+  font-size: 1.05em;
+  font-weight: 700;
+}
+
+#write .doc-cover-owner,
+#write .doc-cover-prepared-by,
+#write .doc-cover-date {
+  display: block;
+  min-width: 70%;
+  margin: 2mm 0;
+  color: #35434e;
+  font-size: 1em;
+}
+
+#write h1,
+#write h2,
+#write h3,
+#write h4 {
+  font-family:
+    "FandolHei", "Noto Sans CJK SC", "Source Han Sans SC",
+    "Microsoft YaHei", sans-serif;
+  font-weight: 700;
+}
+
+#write h1 {
+  margin: 0 0 1em;
+  padding: 0 0 0.45em;
+  border-bottom: 0.8mm solid var(--feasibility-navy);
+  color: var(--feasibility-navy);
+  font-size: 1.75em;
+}
+
+#write h2 {
+  margin: 1.6em 0 0.65em;
+  color: #234b6d;
+  font-size: 1.28em;
+}
+
+#write h3 {
+  margin: 1.3em 0 0.5em;
+  padding-left: 0.6em;
+  border-left: 0.22em solid var(--feasibility-gold);
+  font-size: 1.08em;
+}
+
+#write h4 {
+  font-size: 1em;
+}
+
+#write p {
+  margin: 0 0 0.8em;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+#write .doc-cover p,
+#write li > p,
+#write blockquote p,
+#write td p,
+#write th p {
+  text-indent: 0;
+}
+
+#write blockquote {
+  margin: 1em 0;
+  padding: 0.75em 1em;
+  border-left: 0.25em solid var(--feasibility-gold);
+  background: #faf8f3;
+}
+
+#write table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  font-size: 0.86em;
+}
+
+#write th,
+#write td {
+  padding: 0.48em 0.65em;
+  border: 1px solid var(--feasibility-border);
+}
+
+#write th {
+  color: #fff;
+  background: var(--feasibility-navy);
+}
+
+#write tbody tr:nth-child(even) {
+  background: var(--feasibility-soft);
+}
+
+#write code {
+  padding: 0.1em 0.3em;
+  background: #eef1f3;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.82em;
+}
+
+#write pre,
+#write .md-fences {
+  margin: 1em 0;
+  padding: 0.9em 1em;
+  overflow: auto;
+  border: 1px solid #d0d7dc;
+  background: #f6f8f9;
+}
+
+#write pre code {
+  padding: 0;
+  background: transparent;
+}
+
+#write img,
+#write svg {
+  max-width: 100%;
+  height: auto;
+}

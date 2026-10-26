@@ -1,0 +1,158 @@
+:root {
+  --blind-ink: #000;
+  --blind-border: #333;
+  --blind-soft: #f3f3f3;
+}
+
+#write {
+  color: var(--blind-ink);
+  font-family:
+    "FandolSong", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+#write .doc-cover-tender {
+  display: flex;
+  min-height: 220mm;
+  padding: 18mm 12mm;
+  border: 0.5mm solid #000;
+  break-after: page;
+  break-inside: avoid;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#write .doc-cover-copy-mark {
+  margin: 0 0 20mm;
+  font-size: 1.15em;
+  font-weight: 700;
+}
+
+#write .doc-cover-project-name {
+  margin: 0 0 7mm;
+  font-size: 1.45em;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#write .doc-cover-project-number {
+  margin: 0 0 20mm;
+}
+
+#write .doc-cover-title {
+  margin: 0 0 8mm;
+  font-size: 2.2em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+#write .doc-cover-volume {
+  margin: 0 0 24mm;
+  font-size: 1.3em;
+  font-weight: 700;
+}
+
+#write .doc-cover-bidder,
+#write .doc-cover-representative {
+  display: none !important;
+}
+
+#write .doc-cover-date {
+  display: block;
+  margin-top: 18mm;
+}
+
+#write h1,
+#write h2,
+#write h3,
+#write h4,
+#write h5,
+#write h6 {
+  color: #000;
+  font-family:
+    "FandolHei", "SimHei", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-weight: 700;
+}
+
+#write h1 {
+  margin: 0 0 0.8em;
+  padding-bottom: 0.35em;
+  border-bottom: 0.5mm solid #000;
+  font-size: 1.55em;
+}
+
+#write h2 {
+  margin: 1.35em 0 0.5em;
+  font-size: 1.2em;
+}
+
+#write h3 {
+  margin: 1.15em 0 0.4em;
+  font-size: 1.05em;
+}
+
+#write p {
+  margin: 0 0 0.65em;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+#write .doc-cover p,
+#write li > p,
+#write blockquote p,
+#write td p,
+#write th p {
+  text-indent: 0;
+}
+
+#write a {
+  color: #000;
+  text-decoration: none;
+}
+
+#write blockquote {
+  margin: 0.8em 0;
+  padding: 0.6em 0.8em;
+  border: 0.25mm solid #777;
+  background: var(--blind-soft);
+}
+
+#write table {
+  width: 100%;
+  margin: 0.8em 0;
+  border-collapse: collapse;
+  font-size: 0.88em;
+}
+
+#write th,
+#write td {
+  padding: 0.4em 0.55em;
+  border: 0.3mm solid var(--blind-border);
+}
+
+#write th {
+  background: #e9e9e9;
+}
+
+#write code {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.8em;
+}
+
+#write pre,
+#write .md-fences {
+  margin: 0.8em 0;
+  padding: 0.75em 0.9em;
+  overflow: auto;
+  border: 0.25mm solid #777;
+  background: #f5f5f5;
+}
+
+#write pre code {
+  padding: 0;
+  background: transparent;
+}

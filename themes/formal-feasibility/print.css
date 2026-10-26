@@ -1,0 +1,5 @@
+@media print {
+  #write .doc-cover-project-report {
+    break-after: page;
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "manifestVersion": 1,
+  "id": "typora-pixyll",
+  "name": "Pixyll",
+  "version": "1.14.7",
+  "description": "第三方导入的 Pixyll 风格主题。",
+  "author": "Typora",
+  "license": "第三方资源，见 themes/THEME_NOTICE.md",
+  "base": "typora-base.css",
+  "entry": "pixyll.css",
+  "domPreset": "typora",
+  "defaultFontSize": "16px",
+  "supportedFeatures": [
+    "code",
+    "table",
+    "task-list",
+    "footnote",
+    "katex",
+    "mermaid"
+  ],
+  "docxStyle": {
+    "preset": "general"
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "Merriweather",
+        "aliases": ["PT Serif", "Georgia", "Times New Roman"],
+        "source": "pixyll/merriweather-v19-latin-300.woff",
+        "weight": 300,
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Merriweather",
+        "aliases": ["PT Serif", "Georgia", "Times New Roman"],
+        "source": "pixyll/merriweather-v19-latin-300italic.woff",
+        "weight": 300,
+        "style": "italic",
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Merriweather",
+        "aliases": ["PT Serif", "Georgia", "Times New Roman"],
+        "source": "pixyll/merriweather-v19-latin-700.woff",
+        "weight": 700,
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Merriweather",
+        "aliases": ["PT Serif", "Georgia", "Times New Roman"],
+        "source": "pixyll/merriweather-v19-latin-700italic.woff",
+        "weight": 700,
+        "style": "italic",
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Lato",
+        "aliases": ["Helvetica Neue", "Helvetica", "Arial"],
+        "source": "pixyll/lato-v14-latin-300.woff",
+        "weight": 300,
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Lato",
+        "aliases": ["Helvetica Neue", "Helvetica", "Arial"],
+        "source": "pixyll/lato-v14-latin-300italic.woff",
+        "weight": 300,
+        "style": "italic",
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Lato",
+        "aliases": ["Helvetica Neue", "Helvetica", "Arial"],
+        "source": "pixyll/lato-v14-latin-900.woff",
+        "weight": 900,
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "Lato",
+        "aliases": ["Helvetica Neue", "Helvetica", "Arial"],
+        "source": "pixyll/lato-v14-latin-900italic.woff",
+        "weight": 900,
+        "style": "italic",
+        "license": "OFL-1.1"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Bold.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "bundled": true
+}

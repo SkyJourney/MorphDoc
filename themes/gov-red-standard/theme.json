@@ -1,0 +1,92 @@
+{
+  "manifestVersion": 1,
+  "id": "gov-red-standard",
+  "name": "政企红头·标准文件",
+  "version": "0.5.1",
+  "description": "参照党政机关公文版式设计的标准红头文件主题，包含发文机关标志、发文字号、落款和黑色版记。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "generic",
+  "defaultFontSize": "21.333px",
+  "supportedFeatures": [
+    "code",
+    "table",
+    "task-list",
+    "footnote",
+    "katex",
+    "mermaid",
+    "echarts"
+  ],
+  "category": "red-letter",
+  "compatibleProfiles": ["official"],
+  "pageDefaults": {
+    "margins": {
+      "top": "37mm",
+      "right": "26mm",
+      "bottom": "35mm",
+      "left": "28mm"
+    },
+    "header": {
+      "enabled": false,
+      "height": "8mm",
+      "showDivider": false,
+      "fontSize": "4.94mm",
+      "fontFamily": "\"FandolSong\", SimSun, serif",
+      "color": "#000000",
+      "left": {
+        "enabled": false,
+        "content": ""
+      },
+      "center": {
+        "enabled": false,
+        "content": ""
+      },
+      "right": {
+        "enabled": false,
+        "content": ""
+      }
+    },
+    "footer": {
+      "enabled": true,
+      "height": "7mm",
+      "showDivider": false,
+      "fontSize": "4.94mm",
+      "fontFamily": "\"FandolSong\", SimSun, serif",
+      "color": "#000000",
+      "alignment": "outer",
+      "format": "official-page",
+      "startFrom": 1,
+      "showOnFirstPage": true
+    }
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolSong",
+        "aliases": ["MorphDoc Fandol Song", "STZhongsong", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["MorphDoc Fandol Song", "STZhongsong", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Bold.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["MorphDoc Fandol Hei", "SimHei", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "docxStyle": {
+    "preset": "official"
+  },
+  "bundled": true
+}

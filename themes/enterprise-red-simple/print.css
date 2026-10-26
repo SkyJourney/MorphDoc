@@ -1,0 +1,8 @@
+@media print {
+  #write .doc-masthead,
+  #write .doc-title,
+  #write .doc-signature,
+  #write .doc-edition {
+    break-inside: avoid;
+  }
+}

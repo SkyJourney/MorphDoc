@@ -1,0 +1,6 @@
+@media print {
+  #write table,
+  #write blockquote {
+    break-inside: avoid;
+  }
+}

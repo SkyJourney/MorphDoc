@@ -1,0 +1,163 @@
+:root {
+  --md-text: #2f363d;
+  --md-muted: #68737d;
+  --md-border: #d8dee4;
+  --md-code-background: #f6f8fa;
+  --md-accent: #2563a6;
+}
+
+#write {
+  width: min(100%, 860px);
+  margin: 0 auto;
+  color: var(--md-text);
+  font-family:
+    "FandolHei", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  overflow-wrap: break-word;
+}
+
+#write h1,
+#write h2,
+#write h3,
+#write h4 {
+  color: #20262c;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+#write h1 {
+  margin: 2.2em 0 1em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--md-border);
+  font-size: 2em;
+}
+
+#write h2 {
+  margin: 2em 0 0.8em;
+  font-size: 1.55em;
+}
+
+#write h3 {
+  margin: 1.7em 0 0.7em;
+  font-size: 1.25em;
+}
+
+#write p {
+  margin: 0 0 1em;
+}
+
+#write a {
+  color: var(--md-accent);
+  text-decoration: none;
+}
+
+#write blockquote {
+  margin: 1.25em 0;
+  padding: 0.75em 1em;
+  border-left: 4px solid #b7c3cd;
+  color: var(--md-muted);
+  background: #f8fafb;
+}
+
+#write code {
+  padding: 0.12em 0.35em;
+  border-radius: 4px;
+  background: var(--md-code-background);
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.9em;
+}
+
+#write pre,
+#write .md-fences {
+  margin: 1.25em 0;
+  padding: 1em 1.15em;
+  overflow: auto;
+  border: 1px solid #e4e8ec;
+  border-radius: 7px;
+  background: var(--md-code-background);
+}
+
+#write pre code {
+  padding: 0;
+  background: transparent;
+}
+
+#write .hljs-keyword,
+#write .hljs-selector-tag,
+#write .hljs-literal {
+  color: #9a3412;
+}
+
+#write .hljs-string,
+#write .hljs-attr {
+  color: #166534;
+}
+
+#write .hljs-title,
+#write .hljs-function {
+  color: #1d4ed8;
+}
+
+#write .hljs-comment {
+  color: #7c838a;
+  font-style: italic;
+}
+
+#write table {
+  width: 100%;
+  margin: 1.3em 0;
+  border-collapse: collapse;
+}
+
+#write th,
+#write td {
+  padding: 0.55em 0.75em;
+  border: 1px solid var(--md-border);
+  text-align: left;
+}
+
+#write th {
+  background: #f4f6f8;
+  font-weight: 650;
+}
+
+#write img,
+#write svg {
+  max-width: 100%;
+  height: auto;
+}
+
+#write .contains-task-list {
+  padding-left: 0.25em;
+  list-style: none;
+}
+
+#write .md-task-list-item {
+  list-style: none;
+}
+
+#write .task-list-item-checkbox {
+  margin: 0 0.55em 0.2em 0;
+  vertical-align: middle;
+}
+
+#write .footnotes {
+  margin-top: 2.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--md-border);
+  color: var(--md-muted);
+  font-size: 0.9em;
+}
+
+#write .katex-display {
+  margin: 1.4em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+
+#write .mermaid {
+  margin: 1.5em auto;
+  text-align: center;
+}

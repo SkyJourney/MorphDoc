@@ -1,0 +1,31 @@
+{
+  "name": "@morphdoc/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "verify:docx-http": "node scripts/verify-docx-http.mjs",
+    "verify:docx-r4-matrix": "node scripts/verify-docx-r4-matrix.mjs",
+    "verify:docx-theme-styles": "node scripts/verify-docx-theme-styles.mjs"
+  },
+  "dependencies": {
+    "@morphdoc/application": "workspace:*",
+    "@morphdoc/core": "workspace:*",
+    "@morphdoc/docx-engine": "workspace:*",
+    "@morphdoc/docx-theme-engine": "workspace:*",
+    "@morphdoc/renderer": "workspace:*",
+    "fflate": "0.8.3",
+    "fastify": "^5.6.2",
+    "playwright": "1.62.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.21.0",
+    "vitest": "^4.1.10"
+  }
+}

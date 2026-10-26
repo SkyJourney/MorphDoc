@@ -1,0 +1,32 @@
+@media print {
+  html,
+  body {
+    margin: 0;
+    background: #fff;
+  }
+
+  #write {
+    width: auto;
+    max-width: none;
+  }
+
+  #write h1,
+  #write h2,
+  #write h3,
+  #write h4 {
+    break-after: avoid-page;
+  }
+
+  #write pre,
+  #write blockquote,
+  #write table,
+  #write figure,
+  #write img,
+  #write svg {
+    break-inside: avoid-page;
+  }
+
+  #write a {
+    color: inherit;
+  }
+}

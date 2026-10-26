@@ -1,0 +1,56 @@
+{
+  "manifestVersion": 1,
+  "id": "tender-classic",
+  "name": "标书正式·经典黑白",
+  "version": "0.5.1",
+  "description": "适用于投标文件、响应文件和技术方案的经典黑白正式主题。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "generic",
+  "defaultFontSize": "17px",
+  "supportedFeatures": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+  "category": "tender",
+  "compatibleProfiles": ["tender"],
+  "pageDefaults": {
+    "margins": {
+      "top": "25mm",
+      "right": "25mm",
+      "bottom": "25mm",
+      "left": "30mm"
+    }
+  },
+  "docxStyle": {
+    "preset": "tender",
+    "headings": {
+      "color": "#000000"
+    }
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolSong",
+        "aliases": ["Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Bold.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "bundled": true
+}

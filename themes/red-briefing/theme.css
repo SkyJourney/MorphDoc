@@ -1,0 +1,172 @@
+:root {
+  --briefing-red: #c40009;
+  --briefing-ink: #1f1f1f;
+  --briefing-muted: #666;
+  --briefing-soft: #fff6f4;
+}
+
+#write {
+  color: var(--briefing-ink);
+  font-family:
+    "FandolSong", "Noto Serif CJK SC", "Source Han Serif SC",
+    "Microsoft YaHei", "SimSun", serif;
+  font-size: 18px;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+#write .doc-masthead-briefing {
+  margin: 0 0 11mm;
+  break-inside: avoid;
+}
+
+#write .doc-briefing-masthead {
+  margin: 0;
+  padding: 3mm 0 4mm;
+  border-top: 1mm solid var(--briefing-red);
+  border-bottom: 1mm solid var(--briefing-red);
+  color: var(--briefing-red);
+  font-family:
+    "FandolSong", "STZhongsong", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  font-size: 2.35em;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.35;
+  text-align: center;
+  text-indent: 0;
+}
+
+#write .doc-briefing-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5mm 8mm;
+  padding: 3mm 1mm 2mm;
+  border-bottom: 0.35mm solid var(--briefing-red);
+  color: #444;
+  font-size: 0.78em;
+  line-height: 1.5;
+}
+
+#write .doc-briefing-publisher,
+#write .doc-briefing-date {
+  text-align: right;
+}
+
+#write .doc-title {
+  margin: 0 0 8mm;
+  font-family:
+    "FandolSong", "STZhongsong", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  font-size: 1.65em;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+#write h1:not(.doc-title),
+#write h2,
+#write h3,
+#write h4 {
+  margin: 1.35em 0 0.5em;
+  font-family:
+    "MorphDoc Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#write h1:not(.doc-title) {
+  color: var(--briefing-red);
+  font-size: 1.5em;
+}
+
+#write h2 {
+  padding-bottom: 0.25em;
+  border-bottom: 0.35mm solid #d8a2a2;
+  color: #8f1015;
+  font-size: 1.22em;
+}
+
+#write h3,
+#write h4 {
+  font-size: 1.05em;
+}
+
+#write p {
+  margin: 0 0 0.75em;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+#write li > p,
+#write blockquote p,
+#write td p,
+#write th p {
+  text-indent: 0;
+}
+
+#write .doc-briefing-contact {
+  margin-top: 10mm;
+  padding: 2mm 0;
+  border-top: 0.6mm solid var(--briefing-red);
+  border-bottom: 0.25mm solid var(--briefing-red);
+  color: var(--briefing-muted);
+  font-size: 0.78em;
+  line-height: 1.6;
+}
+
+#write blockquote {
+  margin: 1em 0;
+  padding: 0.75em 1em;
+  border-left: 0.25em solid var(--briefing-red);
+  background: var(--briefing-soft);
+}
+
+#write table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  font-size: 0.88em;
+}
+
+#write th,
+#write td {
+  padding: 0.5em 0.7em;
+  border: 1px solid #c7c7c7;
+}
+
+#write th {
+  color: #7d1116;
+  background: #fbe9e8;
+}
+
+#write a {
+  color: #9e1117;
+}
+
+#write code {
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: #f5f5f5;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 0.82em;
+}
+
+#write pre,
+#write .md-fences {
+  margin: 1em 0;
+  padding: 0.9em 1em;
+  overflow: auto;
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  line-height: 1.6;
+}
+
+#write pre code {
+  padding: 0;
+  background: transparent;
+}
+
+#write img,
+#write svg {
+  max-width: 100%;
+  height: auto;
+}

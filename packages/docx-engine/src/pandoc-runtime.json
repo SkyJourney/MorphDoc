@@ -1,0 +1,102 @@
+{
+  "version": "3.9.0.2",
+  "license": "GPL-2.0-or-later",
+  "projectUrl": "https://pandoc.org/",
+  "sourceArchiveUrl": "https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-source.tar.gz",
+  "artifacts": [
+    {
+      "platform": "win32",
+      "architecture": "x64",
+      "archiveType": "zip",
+      "downloadUrl": "https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-windows-x86_64.zip",
+      "sha256": "C97542F2800F446E788D9F74237856D995421AD1BB3CC8324286840C5F272D3A",
+      "executableRelativePath": "pandoc.exe",
+      "licenseFiles": ["COPYING.rtf", "COPYRIGHT.txt"],
+      "files": {
+        "pandoc.exe": {
+          "bytes": 231056136,
+          "sha256": "E83F8354C0F507222B5684797B9C5AE766F03889785995D14AAC27816EC456BA"
+        },
+        "COPYING.rtf": {
+          "bytes": 20401,
+          "sha256": "DA9A2C9D0C3A3327D18684635424A13CDA9FC65D406A0FFC40AE8D016B476669"
+        },
+        "COPYRIGHT.txt": {
+          "bytes": 9823,
+          "sha256": "43575D901FD50CC06F49042B82F114667A82C17D63B429E99635AE9430C977C4"
+        }
+      }
+    },
+    {
+      "platform": "linux",
+      "architecture": "x64",
+      "archiveType": "tar.gz",
+      "downloadUrl": "https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-linux-amd64.tar.gz",
+      "sha256": "A69ABFABABDA8A56969A254B09F9553A7BE89DDEC00D4E0FE9FD585D71A67508",
+      "executableRelativePath": "bin/pandoc",
+      "licenseFiles": ["COPYING.md", "COPYRIGHT"]
+    },
+    {
+      "platform": "darwin",
+      "architecture": "arm64",
+      "archiveType": "zip",
+      "downloadUrl": "https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-arm64-macOS.zip",
+      "sha256": "6E9ECA844076BCBB599BBEEBBBA78A70F93B5307782B85C2C272872812C88875",
+      "executableRelativePath": "pandoc-3.9.0.2-arm64/bin/pandoc",
+      "licenseFiles": ["COPYING.md", "COPYRIGHT"],
+      "licenseSource": {
+        "COPYING.md": {
+          "downloadUrl": "https://raw.githubusercontent.com/jgm/pandoc/3.9.0.2/COPYING.md"
+        },
+        "COPYRIGHT": {
+          "downloadUrl": "https://raw.githubusercontent.com/jgm/pandoc/3.9.0.2/COPYRIGHT"
+        }
+      },
+      "files": {
+        "pandoc": {
+          "bytes": 187727808,
+          "sha256": "901A9D2B3D1484E008CBCE7A11739E8C9C22161C4A4222589ED2C53C96B8A55E"
+        },
+        "COPYING.md": {
+          "bytes": 17787,
+          "sha256": "9D56CAC92294E206AF026A5502BEE0FED77200B08B51EC28AA63C9EFDA4DCFDD"
+        },
+        "COPYRIGHT": {
+          "bytes": 9598,
+          "sha256": "842E33EF01625E93F85BEBB8BAC83AA570186B7AA77A09971257CC29F8F60740"
+        }
+      }
+    },
+    {
+      "platform": "darwin",
+      "architecture": "x64",
+      "archiveType": "zip",
+      "downloadUrl": "https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-x86_64-macOS.zip",
+      "sha256": "B9FBCEABCCBC8F34AC021A50483FC32F8160568D0B4B2C22D81BB29E3054FD82",
+      "executableRelativePath": "pandoc-3.9.0.2-x86_64/bin/pandoc",
+      "licenseFiles": ["COPYING.md", "COPYRIGHT"],
+      "licenseSource": {
+        "COPYING.md": {
+          "downloadUrl": "https://raw.githubusercontent.com/jgm/pandoc/3.9.0.2/COPYING.md"
+        },
+        "COPYRIGHT": {
+          "downloadUrl": "https://raw.githubusercontent.com/jgm/pandoc/3.9.0.2/COPYRIGHT"
+        }
+      },
+      "files": {
+        "pandoc": {
+          "bytes": 119823904,
+          "sha256": "539A4D539386E62EA7DBD6F0B7C0F76DFADAA78D57E47472849B1C878F8A0A6B"
+        },
+        "COPYING.md": {
+          "bytes": 17787,
+          "sha256": "9D56CAC92294E206AF026A5502BEE0FED77200B08B51EC28AA63C9EFDA4DCFDD"
+        },
+        "COPYRIGHT": {
+          "bytes": 9598,
+          "sha256": "842E33EF01625E93F85BEBB8BAC83AA570186B7AA77A09971257CC29F8F60740"
+        }
+      }
+    }
+  ]
+}

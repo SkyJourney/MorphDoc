@@ -1,0 +1,65 @@
+{
+  "manifestVersion": 1,
+  "id": "typora-github",
+  "name": "GitHub",
+  "version": "1.14.7",
+  "description": "第三方导入的 GitHub 风格主题。",
+  "author": "Typora",
+  "license": "第三方资源，见 themes/THEME_NOTICE.md",
+  "base": "typora-base.css",
+  "entry": "github.css",
+  "domPreset": "typora",
+  "defaultFontSize": "16px",
+  "supportedFeatures": [
+    "code",
+    "table",
+    "task-list",
+    "footnote",
+    "katex",
+    "mermaid"
+  ],
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "Open Sans",
+        "aliases": ["Clear Sans", "Helvetica Neue", "Helvetica", "Arial"],
+        "source": "github/open-sans-v17-latin-ext_latin-regular.woff2",
+        "weight": 400,
+        "license": "Apache-2.0"
+      },
+      {
+        "family": "Open Sans",
+        "aliases": ["Clear Sans", "Helvetica Neue", "Helvetica", "Arial"],
+        "source": "github/open-sans-v17-latin-ext_latin-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "license": "Apache-2.0"
+      },
+      {
+        "family": "Open Sans",
+        "aliases": ["Clear Sans", "Helvetica Neue", "Helvetica", "Arial"],
+        "source": "github/open-sans-v17-latin-ext_latin-700.woff2",
+        "weight": 700,
+        "license": "Apache-2.0"
+      },
+      {
+        "family": "Open Sans",
+        "aliases": ["Clear Sans", "Helvetica Neue", "Helvetica", "Arial"],
+        "source": "github/open-sans-v17-latin-ext_latin-700italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "license": "Apache-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["SimHei", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "docxStyle": {
+    "preset": "technical"
+  },
+  "bundled": true
+}

@@ -1,0 +1,83 @@
+{
+  "recipeVersion": 1,
+  "manifestVersion": 1,
+  "id": "morphdoc-mono",
+  "version": "1.0.0",
+  "name": "MorphDoc 确定性等宽字体包",
+  "description": "为代码块与行内代码提供经过 Chromium、Word 和 WPS 验证的原生静态等宽 Regular 与 Bold 字形面。",
+  "internalFamily": "MorphDoc Mono",
+  "license": "OFL-1.1",
+  "licenseSource": "OFL-CascadiaCode.txt",
+  "licensePath": "OFL-CascadiaCode.txt",
+  "licenseBytes": 4394,
+  "licenseSha256": "d6e8a237280214b5938a0023484296e6c88de86d2eeb96d8d3844b285ec1bf7e",
+  "noticeSource": "SOURCE.md",
+  "noticePath": "SOURCE.md",
+  "compatibility": {
+    "minimumAppVersion": "0.6.0"
+  },
+  "faces": [
+    {
+      "id": "mono-regular",
+      "targets": [
+        "MorphDoc Mono",
+        "Cascadia Mono",
+        "Cascadia Code",
+        "Consolas",
+        "Lucida Console",
+        "SFMono-Regular",
+        "Menlo",
+        "Monaco",
+        "Courier New",
+        "Courier",
+        "Source Code Pro",
+        "JetBrains Mono"
+      ],
+      "weight": 400,
+      "style": "normal",
+      "web": {
+        "source": "MorphDocMono-Regular.woff2",
+        "path": "fonts/MorphDocMono-Regular.woff2",
+        "bytes": 65364,
+        "sha256": "7f3d6000155483377680b382a1395a5554b4bd8f79154253c8a9535919b57869"
+      },
+      "docx": {
+        "source": "MorphDocMono-Regular.ttf",
+        "path": "fonts/MorphDocMono-Regular.ttf",
+        "bytes": 218012,
+        "sha256": "6e2c805b61c256b68f079ba60b4dac1ce05a7881a14fbeb057af20369511bb72"
+      }
+    },
+    {
+      "id": "mono-bold",
+      "targets": [
+        "MorphDoc Mono",
+        "Cascadia Mono",
+        "Cascadia Code",
+        "Consolas",
+        "Lucida Console",
+        "SFMono-Regular",
+        "Menlo",
+        "Monaco",
+        "Courier New",
+        "Courier",
+        "Source Code Pro",
+        "JetBrains Mono"
+      ],
+      "weight": 700,
+      "style": "normal",
+      "web": {
+        "source": "MorphDocMono-Bold.woff2",
+        "path": "fonts/MorphDocMono-Bold.woff2",
+        "bytes": 66632,
+        "sha256": "1c6180394e74f32c61e7a5dc7337493ea9e7637ec65f022b5272e6875589fb29"
+      },
+      "docx": {
+        "source": "MorphDocMono-Bold.ttf",
+        "path": "fonts/MorphDocMono-Bold.ttf",
+        "bytes": 218624,
+        "sha256": "c3cf0a457f1d1a466704c38862c542e9342dfea84b44d14433cd7b72b4a07d00"
+      }
+    }
+  ]
+}

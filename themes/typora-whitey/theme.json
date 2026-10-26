@@ -1,0 +1,50 @@
+{
+  "manifestVersion": 1,
+  "id": "typora-whitey",
+  "name": "Whitey",
+  "version": "1.14.7",
+  "description": "第三方导入的 Whitey 风格主题。",
+  "author": "Typora",
+  "license": "第三方资源，见 themes/THEME_NOTICE.md",
+  "base": "typora-base.css",
+  "entry": "whitey.css",
+  "domPreset": "typora",
+  "defaultFontSize": "16px",
+  "supportedFeatures": [
+    "code",
+    "table",
+    "task-list",
+    "footnote",
+    "katex",
+    "mermaid"
+  ],
+  "docxStyle": {
+    "preset": "general"
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolSong",
+        "aliases": ["Vollkorn", "Palatino", "Times", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["Vollkorn", "Palatino", "Times", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Bold.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Arial", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "bundled": true
+}

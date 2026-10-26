@@ -1,0 +1,12 @@
+{
+  "appId": "com.morphdoc.desktop",
+  "englishName": "MorphDoc",
+  "displayName": "墨呈",
+  "windowTitle": "墨呈 · MorphDoc",
+  "slogan": "一稿多式，即写即呈",
+  "description": "面向结构化 Markdown 的主题化文档创作与发布工具",
+  "executableName": "MorphDoc",
+  "artifactPrefix": "MorphDoc",
+  "legacyDisplayName": "Markdown PDF 导出器",
+  "legacyExecutableName": "md-to-pdf"
+}

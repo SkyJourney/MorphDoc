@@ -1,0 +1,61 @@
+{
+  "manifestVersion": 1,
+  "id": "enterprise-red-simple",
+  "name": "政企红头·企业简版",
+  "version": "0.5.1",
+  "description": "适合企业通知、制度和内部发文的简洁红头主题，保留识别度并降低机关公文的复杂度。",
+  "author": "morphdoc contributors",
+  "license": "项目自有",
+  "entry": "theme.css",
+  "print": "print.css",
+  "domPreset": "generic",
+  "defaultFontSize": "18px",
+  "supportedFeatures": [
+    "code",
+    "table",
+    "task-list",
+    "footnote",
+    "katex",
+    "mermaid",
+    "echarts"
+  ],
+  "category": "red-letter",
+  "compatibleProfiles": ["official"],
+  "pageDefaults": {
+    "margins": {
+      "top": "25mm",
+      "right": "25mm",
+      "bottom": "25mm",
+      "left": "28mm"
+    }
+  },
+  "docxStyle": {
+    "preset": "official"
+  },
+  "docxFonts": {
+    "faces": [
+      {
+        "family": "FandolSong",
+        "aliases": ["MorphDoc Fandol Song", "STZhongsong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolSong",
+        "aliases": ["MorphDoc Fandol Song", "STZhongsong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun"],
+        "source": "theme-shared:official-fonts/FandolSong-Bold.woff2",
+        "weight": 700,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      },
+      {
+        "family": "FandolHei",
+        "aliases": ["Noto Sans CJK SC", "Source Han Sans SC", "SimHei", "Microsoft YaHei"],
+        "source": "theme-shared:official-fonts/FandolHei-Regular.woff2",
+        "weight": 400,
+        "license": "GPL-3.0-or-later WITH Font-exception-2.0"
+      }
+    ]
+  },
+  "bundled": true
+}

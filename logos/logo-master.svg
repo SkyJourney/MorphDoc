@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">Markdown PDF Logo</title>
+  <desc id="description">青绿色折角文档与 M 形透明负空间组成的标志</desc>
+  <path
+    fill="#32B8AE"
+    fill-rule="evenodd"
+    d="
+      M 262 64
+      H 650
+      V 198
+      Q 650 254 706 254
+      H 840
+      V 850
+      Q 840 928 762 928
+      H 262
+      Q 184 928 184 850
+      V 142
+      Q 184 64 262 64
+      Z
+
+      M 282 792
+      V 498
+      Q 282 462 318 462
+      Q 334 462 350 478
+      L 512 640
+      L 674 478
+      Q 690 462 706 462
+      Q 742 462 742 498
+      V 792
+      H 650
+      V 626
+      L 548 728
+      Q 512 764 476 728
+      L 374 626
+      V 792
+      Z
+    "
+  />
+  <path
+    fill="#FFD166"
+    d="
+      M 678 76
+      Q 694 76 710 92
+      L 812 194
+      Q 828 210 828 226
+      H 716
+      Q 678 226 678 188
+      Z
+    "
+  />
+</svg>
