@@ -1,0 +1,36 @@
+name: Setup MorphDoc
+description: 安装与本地开发一致的 Node.js、pnpm 与锁定依赖，可选安装 Playwright Chromium。
+
+inputs:
+  playwright:
+    description: 是否安装 Playwright Chromium（'true' 时安装）
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # 不显式指定 pnpm 版本：action 会读取 package.json 的 packageManager 字段，
+    # 避免 CI 与本地、与 package.json 之间出现版本漂移。
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Install Playwright Chromium (Linux)
+      if: inputs.playwright == 'true' && runner.os == 'Linux'
+      shell: bash
+      run: pnpm exec playwright install --with-deps chromium
+
+    - name: Install Playwright Chromium
+      if: inputs.playwright == 'true' && runner.os != 'Linux'
+      shell: bash
+      run: pnpm exec playwright install chromium

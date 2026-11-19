@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { unzipSync } from "fflate";
 import {
   checksumText,
+  collectDesktopNames,
   createDeploymentArchive,
   normalizeVersion,
   parseArguments
@@ -59,6 +60,78 @@ test("Web 离线部署 ZIP 包含 Compose 和导入说明", async () => {
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("parseArguments 支持 --release-notes 路径参数", () => {
+  assert.equal(
+    parseArguments(["--release-notes", "notes/dry-run.md"]).get("release-notes"),
+    "notes/dry-run.md"
+  );
+});
+
+/**
+ * 在临时目录中按给定文件名与内容创建桌面产物，并在回调结束后清理。
+ */
+async function withDesktopDirectory(files, callback) {
+  const directory = await mkdtemp(join(tmpdir(), "morphdoc-desktop-test-"));
+  try {
+    for (const [name, content] of Object.entries(files)) {
+      await writeFile(join(directory, name), content);
+    }
+    await callback(directory);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
+test("collectDesktopNames 仅有 Windows 产物时不收录 dmg", async () => {
+  await withDesktopDirectory(
+    {
+      "MorphDoc-1.0.0-x86_64-Setup.exe": "setup",
+      "MorphDoc-1.0.0-x86_64.zip": "zip"
+    },
+    async (directory) => {
+      assert.deepEqual(await collectDesktopNames(directory, "1.0.0"), [
+        "MorphDoc-1.0.0-x86_64-Setup.exe",
+        "MorphDoc-1.0.0-x86_64.zip"
+      ]);
+    }
+  );
+});
+
+test("collectDesktopNames 按固定顺序收录已存在的 dmg", async () => {
+  await withDesktopDirectory(
+    {
+      "MorphDoc-1.0.0-x86_64-Setup.exe": "setup",
+      "MorphDoc-1.0.0-x86_64.zip": "zip",
+      "MorphDoc-1.0.0-x64.dmg": "intel",
+      "MorphDoc-1.0.0-arm64.dmg": "arm"
+    },
+    async (directory) => {
+      assert.deepEqual(await collectDesktopNames(directory, "1.0.0"), [
+        "MorphDoc-1.0.0-x86_64-Setup.exe",
+        "MorphDoc-1.0.0-x86_64.zip",
+        "MorphDoc-1.0.0-arm64.dmg",
+        "MorphDoc-1.0.0-x64.dmg"
+      ]);
+    }
+  );
+});
+
+test("collectDesktopNames 遇到空 dmg 必须报错而不是静默跳过", async () => {
+  await withDesktopDirectory(
+    {
+      "MorphDoc-1.0.0-x86_64-Setup.exe": "setup",
+      "MorphDoc-1.0.0-x86_64.zip": "zip",
+      "MorphDoc-1.0.0-arm64.dmg": ""
+    },
+    async (directory) => {
+      await assert.rejects(
+        () => collectDesktopNames(directory, "1.0.0"),
+        /发布源文件无效/u
+      );
+    }
+  );
 });
 
 test("正式发布不再拆分独立字体安装器和 ZIP", () => {
