@@ -2,7 +2,7 @@
 
 ## 文本样式
 
-普通段落（反向验证用的临时改动），包含 **加粗**、*斜体*、~~删除线~~、`行内代码` 和 [链接](https://example.com/path?a=1&b=2)。
+普通段落，包含 **加粗**、*斜体*、~~删除线~~、`行内代码` 和 [链接](https://example.com/path?a=1&b=2)。
 自动链接：https://example.com 与 <https://example.org>。
 
 > 一级引用
