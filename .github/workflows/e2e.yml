@@ -23,7 +23,7 @@ permissions:
 env:
   # 额外的 Playwright 参数。仅在引导首批视觉基线时临时设为 --update-snapshots=missing，
   # 正常情况下必须为空：缺少基线应当让测试失败，而不是悄悄生成。
-  PW_ARGS: ''
+  PW_ARGS: '--update-snapshots=missing'
 
 jobs:
   e2e:
