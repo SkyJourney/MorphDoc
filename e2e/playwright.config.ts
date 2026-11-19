@@ -28,8 +28,10 @@ export default defineConfig({
     : [["list"]],
   expect: {
     toHaveScreenshot: {
-      // 允许 1% 以内的像素差异，吸收抗锯齿级别的细微波动
-      maxDiffPixelRatio: 0.01,
+      // 用绝对像素数而不是比例：整页 A4 约 89 万像素，1% 就是约 8900 个像素，足以放过
+      // 一整行文字的改动（反向验证实测：多出 13 个字仍然通过）。100 个像素只吸收
+      // 抗锯齿级别的波动；每像素的颜色容差保持 Playwright 默认值。
+      maxDiffPixels: 100,
       animations: "disabled"
     }
   },
