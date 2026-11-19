@@ -78,3 +78,25 @@ jobs:
         with:
           playwright: 'true'
       - run: pnpm test
+
+  # 覆盖率只在 Linux 上收集并与 coverage-thresholds.json 比较（只升不降的棘轮）。
+  # 脚本按根 test 脚本的顺序构建并测试各包，因此无需另行安排构建顺序。
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          playwright: 'true'
+      - run: pnpm run test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            coverage/summary.md
+            coverage/*/coverage-summary.json
+          if-no-files-found: warn
+          retention-days: 7

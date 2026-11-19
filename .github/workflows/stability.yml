@@ -1,0 +1,50 @@
+name: Stability
+
+# 重复运行完整测试套件，找出"有时失败有时通过"的不稳定用例。
+# 不在每个 PR 上运行（成本高），改为手动触发和每周定时触发。
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 每个平台重复运行的次数（1～20）
+        required: false
+        default: '5'
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stability-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stability:
+    name: Stability (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          playwright: 'true'
+
+      # 手动输入经环境变量传入，由脚本做严格整数与范围校验，不拼接进命令行。
+      - name: Run repeated tests
+        shell: bash
+        env:
+          RUNS: ${{ inputs.runs || '5' }}
+        run: node scripts/stability.mjs --runs "$RUNS"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stability-logs-${{ matrix.os }}
+          path: stability/
+          if-no-files-found: warn
+          retention-days: 7
