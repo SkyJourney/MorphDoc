@@ -23,3 +23,7 @@ output/
 /apps/desktop/.runtime/
 /release/
 *.tsbuildinfo
+
+# Playwright 视觉基线只保留 Linux 版本：其他系统的字体栅格化不同，误提交会造成持续误报。
+e2e/__screenshots__/**/*-darwin.png
+e2e/__screenshots__/**/*-win32.png
