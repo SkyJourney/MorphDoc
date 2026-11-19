@@ -169,6 +169,11 @@ jobs:
             test -s "${dir}/${name}" || { echo "::error::缺少桌面产物 ${name}"; exit 1; }
           done
 
+      # Dockerfile 会复制 output/font-packs/root，镜像构建前必须先生成字体包，
+      # 缺少时构建会直接失败（见 deploy/README.md）。
+      - name: Build font packs
+        run: pnpm run build:font-pack
+
       # 与官方 Compose 构建路径一致，并强制刷新基础镜像、禁用层缓存。
       - name: Build Docker image
         env:

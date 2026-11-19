@@ -2,7 +2,10 @@
 .github
 .local
 .vscode
-apps/desktop
+apps/desktop/*
+# pnpm install --frozen-lockfile 需要全部工作区成员的 package.json，
+# Dockerfile 会 COPY 该文件，因此在排除桌面端源码的同时放行它。
+!apps/desktop/package.json
 coverage
 dist
 node_modules
