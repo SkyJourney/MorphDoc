@@ -1,6 +1,87 @@
 # 墨呈进度
 
-最后更新：2026-08-26
+最后更新：2026-11-20
+
+## CI/CD 流水线与测试体系
+
+在 v0.6.4 之上建立 GitHub Actions 流水线与可复现的测试体系，设计与使用方法见
+[开发工作流文档](WORKFLOW.md)。全部在 `ci/pipeline` 分支上通过真实 CI 迭代验证，
+未直接在 `main` 上试错。
+
+### 新增能力
+
+- **CI**（`ci.yml`）：空白检查（与基线比较，而不是恒为通过的空检查）、类型检查、
+  构建、Linux/macOS/Windows 三平台测试、覆盖率。
+- **E2E**（`e2e.yml`）：Playwright 启动真实应用栈，加载 Markdown 夹具断言预览结构、
+  验证恶意输入不执行脚本，并在 Linux 上做视觉回归（5 张基线，逐张目视审阅后入库）。
+- **发布**（`release.yml`）：三端桌面构建、Docker 镜像构建和统一归集；PR 与手动触发
+  只做演练，`publish` 仅在标签推送时运行。
+- **稳定性**（`stability.yml`）：重复运行完整测试找出不稳定用例，手动与每周定时触发。
+- **覆盖率棘轮**：`coverage-thresholds.json` 按实测下浮 1 个百分点锁定，只升不降。
+- **夹具**：`fixtures/markdown` 下 12 个静态夹具加确定性生成器（带种子的压力文档，
+  CRLF、BOM、纯空白变体在测试时派生）。
+- **本地入口**：`pnpm run ci:local`（跨平台 Node 脚本，替代仅限 bash 的写法）。
+
+### 真实 CI 暴露并修复的既有问题
+
+这些问题在开发机上被历史 `dist/` 残留掩盖，只有无历史状态的环境才会暴露：
+
+- 根 `test` 脚本没有构建被依赖的工作区包（`docx-theme-engine`、`markdown-echarts`、
+  `renderer`），且 `preview-engine` 排在依赖它的 `application` 之后。
+- `deploy/Dockerfile.dockerignore` 排除了整个 `apps/desktop`，而 Dockerfile 需要
+  `COPY apps/desktop/package.json`。该矛盾自开源版初始化提交起就存在，意味着开源版
+  的 Docker 镜像此前实际无法构建。
+- `deploy/Dockerfile` 中 `application` 与 `preview-engine` 的构建顺序颠倒；v0.6.4
+  在根脚本中修正了同样的问题，但没有同步到 Dockerfile。
+
+### 覆盖率基线（2026-11-20 实测）
+
+| 包 | 行 | 分支 |
+| --- | ---: | ---: |
+| semantic-document | 98.03% | 83.67% |
+| renderer | 94.58% | 84.02% |
+| core | 94.14% | 81.57% |
+| document-visual-diff | 92.01% | 81.39% |
+| docx-engine | 88.33% | 74.97% |
+| font-pack-registry | 86.40% | 73.58% |
+| markdown-echarts | 82.23% | 67.20% |
+| docx-theme-engine | 80.38% | 71.88% |
+| server | 75.86% | 61.02% |
+| application | 73.86% | 60.41% |
+| preview-engine | 65.87% | 58.82% |
+| font-pack-builder | 64.08% | 54.54% |
+| desktop | 25.84% | 32.31% |
+| web | 24.98% | 28.92% |
+
+`web` 与 `desktop` 偏低是真实现状：界面和 Electron 主进程依赖真实浏览器或窗口，
+单元测试难以覆盖，由 E2E 补充。统计范围没有为美化数字而缩小。
+
+### 夹具测试发现的已知缺陷（未修复，用 `it.fails` 记录）
+
+修复后对应用例会失败，提示删除记录。位置在
+`packages/renderer/tests/fixture-matrix.test.ts` 的“已知问题”。
+
+1. **无效 Front Matter 第二次渲染起不再报错**：`gray-matter` 在解析前写入缓存，
+   失败后条目残留；同一份内容再次渲染时命中缓存，整段 YAML 被当作正文，标题被误取。
+   服务端与桌面端长驻，预览后导出 PDF 即可触发。仅 `render-markdown.ts` 一处调用，
+   传入选项 `matter(source, {})` 可绕过缓存。
+2. **公式中的根号等 SVG 元素被安全过滤器移除**：KaTeX 用内联 `svg` 与 `path` 绘制
+   根号，渲染结果只剩空壳，`$\sqrt{\pi}$` 显示为 π，数学含义可能改变。
+3. 正文中的普通单词 `footnote` 被误判为启用脚注特性。
+4. 正文中的普通单词 `mermaid`、`katex` 被误判为启用对应特性。
+
+### 仍未验证或待办
+
+- **标签发布从未真实执行过。** 演练覆盖了构建与归集，`publish` 任务与
+  `gh release create` 只经过 `actionlint` 校验，首次真实发版时才会第一次运行。
+- `Stability` 与 E2E“重新生成基线”两个 `workflow_dispatch` 入口在合并进 `main` 之前
+  无法从分支触发，合并后需要各手动运行一次确认。
+- 视觉基线只在 Linux 上比对；容差为 100 个像素（反向验证中，1% 的比例容差会放过
+  整行文字改动，已收紧）。
+- 分支保护需要在合并后到 GitHub 上配置，必需检查名称见 WORKFLOW.md 第 6 节。
+- README 中仍有过时内容（如 `apps/desktop/out/v0.6.0/`、`MorphDoc-0.6.0-...` 的
+  示例路径，以及“Windows Desktop”一栏），不属于本次范围。
+- 桌面产物仍未做代码签名。
 
 ## v0.6.4 环境自适应与 macOS 打包
 
