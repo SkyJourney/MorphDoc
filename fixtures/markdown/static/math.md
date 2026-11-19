@@ -5,7 +5,7 @@
 块级公式：
 
 $$
-\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+\int_{0}^{1} x^{2}\,dx = \frac{1}{3}
 $$
 
 矩阵：

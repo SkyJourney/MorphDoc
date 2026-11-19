@@ -205,6 +205,18 @@ describe("已知问题", () => {
     expect(() => renderMarkdown(source)).toThrow(MarkdownDocumentParseError);
   });
 
+  // 缺陷：KaTeX 用内联 <svg><path/> 绘制平方根号、可拉伸箭头、宽重音符等元素，渲染器的 HTML
+  // 安全过滤会移除 svg 与 path，结果只剩空的 hide-tail 外壳：$\sqrt{\pi}$ 在预览与导出中
+  // 显示为 π，根号和上方横线都消失，数学含义可能因此改变。
+  // 修复方向：在 sanitize-html 的白名单中为 KaTeX 的 svg 与 path 放行必要的标签与属性，
+  // 同时保持对其他 svg 内容（脚本、外链、事件属性）的拒绝。
+  it.fails("KaTeX 的平方根号不应被安全过滤器移除（svg 与 path 被丢弃）", () => {
+    const { articleHtml } = renderMarkdown("根号：$\\sqrt{x}$。");
+
+    expect(articleHtml).toContain("<svg");
+    expect(articleHtml).toContain("<path");
+  });
+
   it.fails("正文中的普通单词 footnote 不应被识别为脚注特性", () => {
     expect(renderMarkdown("普通段落提到 footnote 这个词。").features).not.toContain("footnote");
   });

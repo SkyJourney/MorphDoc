@@ -193,6 +193,9 @@ test.describe("预览渲染（视觉基线，仅 Linux）", () => {
     process.platform !== "linux",
     "视觉基线只在 Linux 上生成与比对，其他系统的字体栅格化不同"
   );
+  // 预览滚动容器的可见高度 = 视口高度 - 211px。视口过矮时整页 A4（1123px）会被裁切，
+  // 基线就只覆盖页面上半部分；1500px 时可见高度为 1289px，足以容纳完整的首页。
+  test.use({ viewport: { width: 1440, height: 1500 } });
 
   for (const scenario of scenarios.filter(({ visual }) => visual)) {
     test(`${scenario.file} 首页与基线一致`, async ({ page }) => {

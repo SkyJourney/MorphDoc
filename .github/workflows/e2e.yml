@@ -20,11 +20,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  # 额外的 Playwright 参数。仅在引导首批视觉基线时临时设为 --update-snapshots=missing，
-  # 正常情况下必须为空：缺少基线应当让测试失败，而不是悄悄生成。
-  PW_ARGS: '--update-snapshots=missing'
-
 jobs:
   e2e:
     name: E2E (Linux)
@@ -40,19 +35,15 @@ jobs:
       - name: Build web runtime and server
         run: pnpm run build:web-runtime && pnpm --filter @morphdoc/server run build
 
+      # 缺少基线时 Playwright 的默认行为是写入实际图片并让该用例失败，不会悄悄通过；
+      # 只有手动触发并勾选 update_snapshots 时才会覆盖已有基线。
       - name: Run E2E
         env:
           UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots }}
         run: |
           set -euo pipefail
-          args=()
           if [ "${UPDATE_SNAPSHOTS:-false}" = "true" ]; then
-            args+=(--update-snapshots)
-          elif [ -n "${PW_ARGS}" ]; then
-            read -r -a args <<< "${PW_ARGS}"
-          fi
-          if [ "${#args[@]}" -gt 0 ]; then
-            pnpm run test:e2e "${args[@]}"
+            pnpm run test:e2e --update-snapshots
           else
             pnpm run test:e2e
           fi
