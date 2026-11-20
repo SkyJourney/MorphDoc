@@ -87,6 +87,25 @@ interface ScenarioSpec {
   expect: Array<{ selector: string; atLeast: number }>;
   /** 为真时要求预览帧内全部图片都已成功解码（图表以静态 SVG 图片呈现）。 */
   imagesLoaded?: boolean;
+  /**
+   * 为真时要求公式里的内联 SVG 在真实浏览器中确实被绘制：渲染尺寸非零；由 path 绘制的
+   * SVG 还必须带驼峰的 viewBox（sanitize-html 输出小写 viewbox，由浏览器的 HTML 解析
+   * 还原）。划线类（\cancel 等）的 SVG 由百分比坐标的 line 绘制，KaTeX 本来就不给它们
+   * 设置 viewBox，因此不对其要求。
+   */
+  mathSvgRendered?: boolean;
+  /**
+   * 为真时要求公式的结构性内联样式在真实浏览器中生效：字形重音符有非零的 left 偏移，
+   * \phantom 的内容颜色为透明，数组列分隔线有非零边框宽度，\rule 的尺寸非零。
+   * 这些样式任何一个被安全过滤器丢弃，公式都会悄悄显示错误。
+   */
+  mathLayoutRendered?: boolean;
+  /**
+   * 为真时要求上标、下标、分式与上下限被正确缩小：每个 katex-sizing 元素的计算字号都严格
+   * 小于公式根字号（本场景的实测为 0.7 倍与 0.5 倍）。生成标记的 KaTeX 与提供样式表的
+   * KaTeX 版本错开时，新旧 class 名对不上，这些元素不再缩小，公式整体偏大。
+   */
+  mathSizingRendered?: boolean;
   /** 是否生成视觉基线。 */
   visual: boolean;
 }
@@ -112,7 +131,35 @@ const scenarios: ScenarioSpec[] = [
   },
   {
     file: "math.md",
-    expect: [{ selector: ".katex", atLeast: 3 }],
+    // 高斯积分与三个根号：每个根号都由内联 SVG 绘制
+    expect: [
+      { selector: ".katex", atLeast: 3 },
+      { selector: ".katex svg", atLeast: 4 }
+    ],
+    mathSvgRendered: true,
+    mathSizingRendered: true,
+    visual: true
+  },
+  {
+    file: "math-svg.md",
+    expect: [
+      { selector: ".katex", atLeast: 10 },
+      { selector: ".katex svg path", atLeast: 10 },
+      { selector: ".katex svg line", atLeast: 3 }
+    ],
+    mathSvgRendered: true,
+    visual: true
+  },
+  {
+    file: "math-layout.md",
+    expect: [
+      { selector: ".katex .accent-body", atLeast: 5 },
+      { selector: ".katex .vertical-separator", atLeast: 3 },
+      { selector: ".katex .katex-rule", atLeast: 3 },
+      { selector: ".katex .katex-hline", atLeast: 1 },
+      { selector: '.katex [style*="color:transparent"]', atLeast: 2 }
+    ],
+    mathLayoutRendered: true,
     visual: true
   },
   {
@@ -163,6 +210,92 @@ test.describe("预览渲染（功能）", () => {
             images.every((image) => (image as HTMLImageElement).naturalWidth > 0)
           );
         expect(allDecoded, "预览帧内全部图片均已成功解码").toBe(true);
+      }
+      if (scenario.mathSvgRendered) {
+        const report = await frame.locator(".katex svg").evaluateAll((svgs) =>
+          svgs.map((svg) => {
+            const box = svg.getBoundingClientRect();
+            return {
+              drawnByPath: svg.querySelector("path") !== null,
+              viewBox: svg.getAttribute("viewBox"),
+              width: box.width,
+              height: box.height
+            };
+          })
+        );
+        expect(report.length, "预览帧内公式 SVG 的数量").toBeGreaterThan(0);
+        for (const [index, item] of report.entries()) {
+          const label = `第 ${index + 1} 个公式 SVG`;
+          expect(item.width, `${label}的渲染宽度`).toBeGreaterThan(0);
+          expect(item.height, `${label}的渲染高度`).toBeGreaterThan(0);
+          if (item.drawnByPath) {
+            expect(item.viewBox, `${label}的 viewBox（驼峰）`).not.toBeNull();
+          }
+        }
+        // 确认确实覆盖到了 path 与 line 两类 SVG，避免断言因分类全空而形同虚设
+        expect(report.some((item) => item.drawnByPath), "存在由 path 绘制的 SVG").toBe(true);
+      }
+      if (scenario.mathLayoutRendered) {
+        const layout = await frame.locator(".katex").first().evaluate((first) => {
+          const root = first.ownerDocument;
+          const px = (value: string): number => Number.parseFloat(value);
+          const all = (selector: string): Element[] => Array.from(root.querySelectorAll(selector));
+          return {
+            accentOffsets: all(".katex .accent-body").map((el) => px(getComputedStyle(el).left)),
+            phantomColors: all('.katex [style*="color:transparent"]').map((el) => getComputedStyle(el).color),
+            separators: all(".katex .vertical-separator").map((el) => ({
+              width: px(getComputedStyle(el).borderRightWidth),
+              style: getComputedStyle(el).borderRightStyle
+            })),
+            rules: all(".katex .katex-rule").map((el) => {
+              const box = el.getBoundingClientRect();
+              return { width: box.width, height: box.height };
+            }),
+            hlines: all(".katex .katex-hline").map((el) => px(getComputedStyle(el).borderBottomWidth))
+          };
+        });
+
+        // 字形重音符靠 left 与底字居中：缺少该样式时 left 为 0，重音符偏向一侧
+        for (const [index, offset] of layout.accentOffsets.entries()) {
+          expect(Math.abs(offset), `第 ${index + 1} 个重音符的 left 偏移`).toBeGreaterThan(0);
+        }
+        // \phantom 靠 color:transparent 隐藏内容：缺少时隐藏的内容会显示出来
+        for (const color of layout.phantomColors) {
+          expect(color, "隐形占位的计算颜色").toBe("rgba(0, 0, 0, 0)");
+        }
+        for (const [index, separator] of layout.separators.entries()) {
+          expect(separator.width, `第 ${index + 1} 条列分隔线的边框宽度`).toBeGreaterThan(0);
+          expect(["solid", "dashed"], `第 ${index + 1} 条列分隔线的边框样式`).toContain(separator.style);
+        }
+        // 至少有一条虚线分隔线，确认 dashed 也被保留
+        expect(
+          layout.separators.some((separator) => separator.style === "dashed"),
+          "存在虚线列分隔线"
+        ).toBe(true);
+        // \rule 与 \vdots 缺少 border-*-width 与 bottom 时会缩成零尺寸
+        for (const [index, rule] of layout.rules.entries()) {
+          expect(rule.width + rule.height, `第 ${index + 1} 条规则线的尺寸`).toBeGreaterThan(0);
+        }
+        for (const [index, width] of layout.hlines.entries()) {
+          expect(width, `第 ${index + 1} 条横线的边框宽度`).toBeGreaterThan(0);
+        }
+      }
+      if (scenario.mathSizingRendered) {
+        const sizes = await frame.locator(".katex").first().evaluate((first) => {
+          const root = first.ownerDocument;
+          const fontSize = (el: Element): number => Number.parseFloat(getComputedStyle(el).fontSize);
+          return {
+            base: fontSize(first),
+            sizing: Array.from(root.querySelectorAll(".katex .katex-sizing")).map(fontSize)
+          };
+        });
+
+        expect(sizes.sizing.length, "存在 katex-sizing 元素").toBeGreaterThan(0);
+        for (const [index, size] of sizes.sizing.entries()) {
+          expect(size, `第 ${index + 1} 个缩放元素的字号应小于公式根字号 ${sizes.base}`).toBeLessThan(
+            sizes.base
+          );
+        }
       }
       expect(errors).toEqual([]);
     });

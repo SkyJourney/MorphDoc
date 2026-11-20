@@ -56,32 +56,75 @@
 `web` 与 `desktop` 偏低是真实现状：界面和 Electron 主进程依赖真实浏览器或窗口，
 单元测试难以覆盖，由 E2E 补充。统计范围没有为美化数字而缩小。
 
-### 夹具测试发现的已知缺陷（未修复，用 `it.fails` 记录）
+### 夹具测试发现的 4 个缺陷（已修复）
 
-修复后对应用例会失败，提示删除记录。位置在
-`packages/renderer/tests/fixture-matrix.test.ts` 的“已知问题”。
+由 Markdown 夹具矩阵发现，最初以 `it.fails` 记录，随后在 `fix/renderer-known-defects`
+中修复，并改为正式的回归测试（`packages/renderer/tests/` 下的
+`front-matter-cache`、`feature-detection`、`sanitize-svg`）。
 
-1. **无效 Front Matter 第二次渲染起不再报错**：`gray-matter` 在解析前写入缓存，
-   失败后条目残留；同一份内容再次渲染时命中缓存，整段 YAML 被当作正文，标题被误取。
-   服务端与桌面端长驻，预览后导出 PDF 即可触发。仅 `render-markdown.ts` 一处调用，
-   传入选项 `matter(source, {})` 可绕过缓存。
+1. **无效 Front Matter 第二次渲染起不再报错**：`gray-matter` 在解析前写入全局缓存，
+   失败后条目残留，同一份内容再次渲染时命中缓存，整段 YAML 被当作正文，标题被误取。
+   缓存还以浅拷贝返回，多次调用会共享同一个 `data` 对象。修复为 `matter(source, {})`。
 2. **公式中的根号等 SVG 元素被安全过滤器移除**：KaTeX 用内联 `svg` 与 `path` 绘制
-   根号，渲染结果只剩空壳，`$\sqrt{\pi}$` 显示为 π，数学含义可能改变。
-3. 正文中的普通单词 `footnote` 被误判为启用脚注特性。
-4. 正文中的普通单词 `mermaid`、`katex` 被误判为启用对应特性。
+   根号、可拉伸箭头、宽重音符、上下括号、划线，渲染结果只剩空壳，`$\sqrt{\pi}$`
+   显示为 π。按 KaTeX 0.16 与 0.19 的实际输出精确放行 `svg`、`path`、`line` 和 11 个
+   属性，不放行 `xmlns`、`href`、`use`、`image`、`foreignObject`、`animate`、`set`、
+   `style` 元素和事件属性；`svg` 的 `style` 只允许 `width`。
+3. 正文中的普通单词 `footnote`、`mermaid`、`katex` 被误判为启用对应特性。改为只匹配真实
+   标签的 `class`，并保留 `katex-error`、`md-echarts-error` 两个占位。
+4. 代码块或行内代码里展示的 `class="katex"` 之类文本同样被误判，由上一条一并修复。
+
+验证方式：
+
+- 在仓库 74 份 Markdown 上对比新旧特性检测，70 份一致，另 4 份仅为旧逻辑误判（例如
+  本文件曾因正文提到这些词被判为同时使用公式、Mermaid、ECharts 与脚注），没有漏判。
+- 把 4 处修复还原后运行新测试，27 项断言真实失败；对 SVG 白名单做 6 种放宽变异
+  （放行 `use`、事件属性、`href`、任意 `style`、引用型属性、`script`），全部被检出。
+- 真实 Chromium 中确认 SVG 被绘制、渲染尺寸非零，路径绘制的 SVG 的 `viewBox` 被浏览器
+  还原为驼峰。
+
+### 公式显示的 3 个深层问题（真实浏览器逐像素对比发现）
+
+放行 SVG 之后，用真实 Chromium 对 139 个公式做 KaTeX 原始输出与过滤后输出的逐像素
+对比，又发现三个单元测试与类型检查都发现不了的显示错误：
+
+1. **安全过滤器还丢弃了若干结构性内联样式。** `left` 缺失时 `\vec`、`\hat` 偏向一侧；
+   `color:transparent` 缺失时 `\phantom{x} y` 把本该隐藏的 `x` 显示出来；`border-*`、
+   `bottom`、`margin` 缺失时数组的 `|` 列分隔线消失、`\rule` 缩成零尺寸。按 KaTeX 的
+   实际取值逐属性放行，`color` 只放行 `transparent`，`border-right-style` 只放行
+   `solid` 与 `dashed`，`margin` 只接受 1 到 4 个以 `em` 为单位的数值。
+2. **生成公式标记的 KaTeX 与提供样式表的 KaTeX 版本错开。** 渲染器经
+   `@mdit/plugin-katex` 使用 KaTeX 0.19，而 `apps/web` 打包的样式表来自 0.16；0.19 给
+   19 个 class 加了 `katex-` 前缀，旧样式表不认识新名字，上标、下标、分式和上下限的
+   字号全部偏大，数组的 `\hline` 不显示。130 个公式中 95 个在应用实际使用的样式表下
+   显示不一致，且没有任何报错。已将 `apps/web` 升到 `^0.19.1`，并新增版本一致性守卫
+   （`scripts/katex-version-consistency.test.mjs`，降级后会失败）。
+3. **全局 `svg { max-width: 100% }` 把 `\vec` 的箭头夹成 0 宽。** 该 SVG 是
+   `position:absolute`，参照物 `.accent-body` 的宽度按 KaTeX 设计为 0。为
+   `.katex svg` 设置 `max-width: none`。
+
+每个新放行的属性做了反向验证（撤销后测试必须失败）7 项与变异验证（故意放宽取值）8 项，
+共 15 项全部被检出；`.katex svg` 规则撤销后 e2e 准确失败在“第 8 个 SVG 宽度为 0”。
+
+**产品决定：公式一律使用主题颜色。** `\color{red}`、`\colorbox` 等用户颜色命令的颜色被
+移除，这是有意为之，用来避免为颜色值设计额外规则，并保持 PDF 与走 Pandoc 的 DOCX 公式
+一致。已在 `katex-style-parity.test.ts` 中固化；若将来要支持，需要为颜色值设计严格规则
+（只接受十六进制与命名颜色）并同步评估 DOCX 的差异。
 
 ### 仍未验证或待办
 
 - **标签发布从未真实执行过。** 演练覆盖了构建与归集，`publish` 任务与
   `gh release create` 只经过 `actionlint` 校验，首次真实发版时才会第一次运行。
-- `Stability` 与 E2E“重新生成基线”两个 `workflow_dispatch` 入口在合并进 `main` 之前
-  无法从分支触发，合并后需要各手动运行一次确认。
 - 视觉基线只在 Linux 上比对；容差为 100 个像素（反向验证中，1% 的比例容差会放过
-  整行文字改动，已收紧）。
+  整行文字改动，已收紧）。在全新 runner 上重新生成的 7 张基线与已入库的逐字节一致，
+  说明 Linux 渲染是确定性的。
 - 分支保护需要在合并后到 GitHub 上配置，必需检查名称见 WORKFLOW.md 第 6 节。
 - README 中仍有过时内容（如 `apps/desktop/out/v0.6.0/`、`MorphDoc-0.6.0-...` 的
   示例路径，以及“Windows Desktop”一栏），不属于本次范围。
 - 桌面产物仍未做代码签名。
+
+已验证：`Stability`（三平台各 2 轮，不稳定用例 0 个）与 E2E“重新生成基线”两个
+`workflow_dispatch` 入口，以及发布演练的手动触发，均已在合并前从分支真实运行并通过。
 
 ## v0.6.4 环境自适应与 macOS 打包
 

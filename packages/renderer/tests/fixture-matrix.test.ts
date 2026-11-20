@@ -176,7 +176,11 @@ describe("findUnsafeMarkup 自检", () => {
     ["十六进制实体混淆", '<a href="&#x6A;avascript:alert(1)">x</a>'],
     ["data html 链接", '<a href="data:text/html,<b>x</b>">x</a>'],
     ["iframe", '<iframe src="https://example.com"></iframe>'],
-    ["属性值含 > 的标签", '<a title="a>b" onclick="x()">x</a>']
+    ["属性值含 > 的标签", '<a title="a>b" onclick="x()">x</a>'],
+    ["SVG use 引用外部资源", '<svg><use href="https://evil.example/x.svg#a"></use></svg>'],
+    ["SVG foreignObject", "<svg><foreignObject><p>x</p></foreignObject></svg>"],
+    ["SVG animate", '<svg><animate attributeName="href" values="x"></animate></svg>'],
+    ["SVG 内的 xlink:href 脚本链接", '<svg><a xlink:href="javascript:alert(1)">x</a></svg>']
   ])("识别：%s", (_name, html) => {
     expect(findUnsafeMarkup(html).length).toBeGreaterThan(0);
   });
@@ -185,46 +189,12 @@ describe("findUnsafeMarkup 自检", () => {
     ["被转义的文字", "<p>&lt;script&gt;alert(1)&lt;/script&gt; onclick=1</p>"],
     ["普通链接", '<a href="https://example.com/a?b=1">x</a>'],
     ["内联图片 Data URL", '<img src="data:image/png;base64,AAAA">'],
-    ["锚点链接", '<a href="#footnote1">x</a>']
+    ["锚点链接", '<a href="#footnote1">x</a>'],
+    [
+      "KaTeX 的内联 SVG",
+      '<svg width="400em" height="1.08em" viewBox="0 0 400000 1080"><path d="M95,702c-2.7,0"></path><line x1="0" y1="0" x2="1" y2="1"></line></svg>'
+    ]
   ])("放行：%s", (_name, html) => {
     expect(findUnsafeMarkup(html)).toEqual([]);
-  });
-});
-
-describe("已知问题", () => {
-  // it.fails：当前缺陷存在时本用例"通过"；缺陷被修复后它会失败，提醒删除这条记录。
-
-  // 缺陷：gray-matter 在解析之前就把内容写入 matter.cache，解析失败抛出异常后缓存条目残留，
-  // 同样内容的第二次调用直接命中缓存，不再抛错，并把整段 YAML 当作正文渲染、标题误取为
-  // 正文首个标题。服务端与桌面主进程长驻，预览、切换主题、导出 PDF 都会重复渲染同一内容。
-  // 修复方向：parseFrontMatter 调用 matter(source, {})，传入选项即可绕过该缓存。
-  it.fails("重复渲染同一份无效 Front Matter 应始终抛错（gray-matter 缓存污染）", () => {
-    const source = "---\nkey: [known-issue-cache-poisoning\n---\n\n# 正文\n";
-
-    expect(() => renderMarkdown(source)).toThrow(MarkdownDocumentParseError);
-    expect(() => renderMarkdown(source)).toThrow(MarkdownDocumentParseError);
-  });
-
-  // 缺陷：KaTeX 用内联 <svg><path/> 绘制平方根号、可拉伸箭头、宽重音符等元素，渲染器的 HTML
-  // 安全过滤会移除 svg 与 path，结果只剩空的 hide-tail 外壳：$\sqrt{\pi}$ 在预览与导出中
-  // 显示为 π，根号和上方横线都消失，数学含义可能因此改变。
-  // 修复方向：在 sanitize-html 的白名单中为 KaTeX 的 svg 与 path 放行必要的标签与属性，
-  // 同时保持对其他 svg 内容（脚本、外链、事件属性）的拒绝。
-  it.fails("KaTeX 的平方根号不应被安全过滤器移除（svg 与 path 被丢弃）", () => {
-    const { articleHtml } = renderMarkdown("根号：$\\sqrt{x}$。");
-
-    expect(articleHtml).toContain("<svg");
-    expect(articleHtml).toContain("<path");
-  });
-
-  it.fails("正文中的普通单词 footnote 不应被识别为脚注特性", () => {
-    expect(renderMarkdown("普通段落提到 footnote 这个词。").features).not.toContain("footnote");
-  });
-
-  it.fails("正文中的普通单词 mermaid 与 katex 不应被识别为对应特性", () => {
-    const { features } = renderMarkdown("讨论 mermaid 与 katex 两个库。");
-
-    expect(features).not.toContain("mermaid");
-    expect(features).not.toContain("katex");
   });
 });

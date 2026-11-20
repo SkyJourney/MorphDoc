@@ -35,7 +35,7 @@
   "desktop:make:mac": "pnpm run desktop:make:mac:arm64 && pnpm run desktop:make:mac:x64",
     "release:stage": "node scripts/stage-release.mjs",
     "test:release-stage": "node --test scripts/stage-release.test.mjs",
-    "test:coverage-tools": "node --test scripts/coverage.test.mjs scripts/stability.test.mjs",
+    "test:coverage-tools": "node --test scripts/coverage.test.mjs scripts/stability.test.mjs scripts/katex-version-consistency.test.mjs",
     "test:coverage": "node scripts/coverage.mjs",
     "test:stability": "node scripts/stability.mjs",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",

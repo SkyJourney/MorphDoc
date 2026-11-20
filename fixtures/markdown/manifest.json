@@ -5,6 +5,13 @@
     "gfm-basic.md": { "features": ["code", "table", "task-list", "footnote"], "warnings": 0 },
     "cjk-mixed.md": { "features": ["table"], "warnings": 0 },
     "math.md": { "features": ["katex"], "warnings": 0 },
+    "math-svg.md": { "features": ["katex"], "warnings": 0 },
+    "math-layout.md": { "features": ["katex"], "warnings": 0 },
+    "prose-feature-words.md": {
+      "features": ["code", "table"],
+      "absent": ["task-list", "footnote", "katex", "mermaid", "echarts"],
+      "warnings": 0
+    },
     "diagrams.md": { "features": ["mermaid", "echarts"], "warnings": 0 },
     "echarts-invalid.md": { "features": ["echarts"], "warnings": 1 },
     "tables-edge.md": { "features": ["table"], "warnings": 0 },

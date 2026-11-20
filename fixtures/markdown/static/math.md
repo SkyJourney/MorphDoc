@@ -5,8 +5,10 @@
 块级公式：
 
 $$
-\int_{0}^{1} x^{2}\,dx = \frac{1}{3}
+\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
 $$
+
+根号与分式：$\sqrt{x}$、$\sqrt[3]{x^2+1}$、$\sqrt{\frac{a}{b}}$。
 
 矩阵：
 

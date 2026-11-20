@@ -260,6 +260,29 @@ describe("分页预览协议", () => {
     );
   });
 
+  it("全局 svg 的 max-width 约束不作用于 KaTeX 公式内部的 SVG", () => {
+    // 回归：KaTeX 的重音符 SVG 是 position:absolute，参照物 .accent-body 的宽度按设计为 0，
+    // 全局 `img, svg { max-width: 100% }` 会把它夹成 0 宽，\vec 的箭头因此消失。
+    const rules = [...documentBaseCss.matchAll(/([^{}]+)\{([^{}]*)\}/gu)].map((match) => ({
+      selector: (match[1] ?? "").replace(/\/\*[\s\S]*?\*\//gu, "").trim(),
+      body: match[2] ?? ""
+    }));
+    const globalRule = rules.find(
+      ({ selector, body }) =>
+        selector.split(",").map((part) => part.trim()).includes("svg") &&
+        /max-width:\s*100%/u.test(body)
+    );
+    const katexRule = rules.find(({ selector }) => selector === ".katex svg");
+
+    expect(globalRule, "存在全局 svg 的 max-width:100% 规则").toBeDefined();
+    expect(katexRule, "存在 .katex svg 的覆盖规则").toBeDefined();
+    expect(katexRule?.body).toMatch(/max-width:\s*none/u);
+    // 覆盖规则必须排在全局规则之后，否则同等优先级下会被全局规则盖掉
+    expect(rules.indexOf(katexRule as (typeof rules)[number])).toBeGreaterThan(
+      rules.indexOf(globalRule as (typeof rules)[number])
+    );
+  });
+
   it("只在至少两行的代码组之间分页", () => {
     const css = buildPagedMediaCss(defaultExportConfig, payload);
 

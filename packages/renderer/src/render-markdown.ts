@@ -206,6 +206,16 @@ const defaultParagraphCloseRenderer =
   markdown.renderer.rules.paragraph_close;
 const lengthStylePattern = /^-?\d+(?:\.\d+)?(?:em|ex|px|%)$/u;
 const tableTextAlignStylePattern = /^(?:left|center|right)$/u;
+// 以下三条规则服务于 KaTeX 的结构性内联样式，取值范围取自它对各类公式的实际输出
+// （数组的 \hline 与列分隔线、\rule、\vdots、\phantom），不接受其他写法。
+// 数组列分隔线的实线与虚线
+const borderLineStylePattern = /^(?:solid|dashed)$/u;
+// 数组列间距形如 "0 -0.02em"：1 到 4 个数值，0 可以不带单位，其余只接受 em
+const marginShorthandStylePattern =
+  /^-?\d+(?:\.\d+)?(?:em)?(?:\s+-?\d+(?:\.\d+)?(?:em)?){0,3}$/u;
+// \phantom 系列通过 color:transparent 隐藏内容。只放行 transparent：缺少它时本该隐藏的
+// 内容会显示出来；而 red、#ff0000 之类的颜色值仍被移除，即不支持用户给公式上色
+const transparentColorStylePattern = /^transparent$/u;
 
 interface MarkdownRenderEnvironment {
   warnings?: string[];
@@ -383,7 +393,13 @@ const safeHtmlOptions: sanitizeHtml.IOptions = {
     "span",
     "sub",
     "summary",
-    "sup"
+    "sup",
+    // KaTeX 用内联 SVG 绘制根号、可拉伸箭头、宽重音符、上下括号和划线。
+    // 只放行它实际产生的三种图形标签；use、image、foreignObject、animate、
+    // script、style 等能引用外部资源或执行行为的标签一律不在白名单内。
+    "svg",
+    "path",
+    "line"
   ],
   allowedAttributes: {
     "*": ["class", "id", "title", "aria-*", "role"],
@@ -401,7 +417,14 @@ const safeHtmlOptions: sanitizeHtml.IOptions = {
     pre: ["class", "hidden", "lang"],
     span: ["class", "style"],
     td: ["colspan", "rowspan", "style"],
-    th: ["colspan", "rowspan", "scope", "style"]
+    th: ["colspan", "rowspan", "scope", "style"],
+    // 属性名取自 KaTeX 0.16 与 0.19 对根号、箭头、重音、括号、划线等命令的实际输出。
+    // sanitize-html 会把属性名转为小写（viewBox → viewbox），浏览器解析内联 SVG 时
+    // 会按 HTML 规范的"SVG 属性大小写修正"步骤还原，因此这里使用小写名称。
+    // 不放行 xmlns（内联 SVG 不需要）、href、xlink:href、style 以外的表现属性与事件属性。
+    svg: ["width", "height", "viewbox", "preserveaspectratio", "style"],
+    path: ["d"],
+    line: ["x1", "y1", "x2", "y2", "stroke-width"]
   },
   allowedSchemes: ["http", "https", "mailto"],
   allowedSchemesByTag: {
@@ -412,13 +435,28 @@ const safeHtmlOptions: sanitizeHtml.IOptions = {
     span: {
       height: [lengthStylePattern],
       top: [lengthStylePattern],
+      // 重音符（\vec、\hat、\bar 等）的 accent-body 靠 left:-0.2077em 这样的偏移与底字居中；
+      // 缺少它时重音符的 SVG 虽然被保留，位置却整体偏向一侧
+      left: [lengthStylePattern],
       width: [lengthStylePattern],
       "min-width": [lengthStylePattern],
       "margin-left": [lengthStylePattern],
       "margin-right": [lengthStylePattern],
       "padding-left": [lengthStylePattern],
       "vertical-align": [lengthStylePattern],
-      "border-bottom-width": [lengthStylePattern]
+      "border-bottom-width": [lengthStylePattern],
+      // 以下属性是 KaTeX 绘制数组分隔线、\rule、\vdots 与 \phantom 所必需的。缺少时：
+      // 数组的 | 列分隔线消失，\rule 缩成零尺寸，\phantom 的隐藏内容显示出来
+      "border-right-width": [lengthStylePattern],
+      "border-top-width": [lengthStylePattern],
+      "border-right-style": [borderLineStylePattern],
+      bottom: [lengthStylePattern],
+      margin: [marginShorthandStylePattern],
+      color: [transparentColorStylePattern]
+    },
+    // KaTeX 的 \vec 等命令会给 svg 设置 width:0.471em 这样的内联宽度
+    svg: {
+      width: [lengthStylePattern]
     },
     td: {
       "text-align": [tableTextAlignStylePattern]
@@ -444,6 +482,19 @@ const safeHtmlOptions: sanitizeHtml.IOptions = {
   }
 };
 
+/**
+ * 对渲染得到的 HTML 执行安全过滤，是渲染链路唯一的 HTML 安全边界。
+ *
+ * 按白名单保留标签、属性、样式与链接协议，其余内容一律移除。单独导出以便不经过
+ * Markdown 解析、直接以恶意 HTML 验证过滤行为。
+ *
+ * @param html 待过滤的 HTML 片段
+ * @returns 过滤后的 HTML 片段
+ */
+export function sanitizeRenderedHtml(html: string): string {
+  return sanitizeHtml(html, safeHtmlOptions);
+}
+
 export function renderMarkdown(
   source: string,
   options: RenderMarkdownOptions = {}
@@ -455,7 +506,7 @@ export function renderMarkdown(
     imageSourceMap: options.imageSourceMap
   };
   const rendered = markdown.render(parsed.content, environment);
-  const bodyHtml = sanitizeHtml(rendered, safeHtmlOptions);
+  const bodyHtml = sanitizeRenderedHtml(rendered);
   const firstBodyHeading = extractFirstHeading(parsed.content);
   const metadata = normalizeMetadata(
     parsed.data,
@@ -507,7 +558,11 @@ export function extractMarkdownImageSources(source: string) {
 
 function parseFrontMatter(source: string) {
   try {
-    return matter(source);
+    // 必须传入选项对象：gray-matter 仅在未传选项时才读写其全局缓存 matter.cache，
+    // 而它在解析之前就写入缓存，解析失败后条目残留，同样内容的下一次调用会直接命中
+    // 缓存而不再抛错（整段 YAML 被当作正文）。缓存还以浅拷贝返回，多次调用会共享
+    // 同一个 data 对象。服务端与桌面主进程长驻，预览、换主题、导出都会重复渲染同一内容。
+    return matter(source, {});
   } catch (error) {
     const message = error instanceof Error ? error.message : "未知错误";
     throw new MarkdownDocumentParseError(
@@ -584,19 +639,51 @@ function extractFirstHeading(source: string): string {
   return heading?.[1]?.trim() ?? "";
 }
 
+/**
+ * 判断 HTML 中是否存在带有指定 class 的真实标签。
+ *
+ * 输入必须是经过安全过滤的 HTML：此时正文与代码中的 "<" 和 ">" 均已被转义为
+ * "&lt;" 与 "&gt;"，字面出现的 "<标签 ..." 一定是真实元素。因此只在标签内部匹配
+ * class 属性，正文里恰好出现的 katex、mermaid、footnote 等普通单词，以及代码块里
+ * 展示的 class="katex" 之类文本，都不会被误判。
+ *
+ * @param html 经过安全过滤的 HTML
+ * @param tokens 任一 class 名称命中即视为存在
+ */
+function hasElementWithClass(html: string, tokens: readonly string[]): boolean {
+  // 连字符在字符类之外不是特殊字符；带 u 标志的正则里 "\-" 还是非法转义，因此不转义它
+  const alternatives = tokens
+    .map((token) => token.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"))
+    .join("|");
+  const pattern = new RegExp(
+    `<[a-zA-Z][^>]*\\sclass="(?:[^"]*\\s)?(?:${alternatives})(?:\\s[^"]*)?"`,
+    "u"
+  );
+  return pattern.test(html);
+}
+
 function detectFeatures(html: string): ThemeFeature[] {
-  const featureChecks: Array<[ThemeFeature, RegExp]> = [
-    ["code", /<pre\b/u],
-    ["table", /<table\b/u],
-    ["task-list", /\bmd-task-list-item\b/u],
-    ["footnote", /\bfootnote/u],
-    ["katex", /\bkatex\b/u],
-    ["mermaid", /\bmermaid\b/u],
-    ["echarts", /\bmd-echarts\b/u]
+  // 标签类特性只能由真实标签产生；class 类特性按真实元素的 class 判断
+  const featureChecks: Array<[ThemeFeature, (html: string) => boolean]> = [
+    ["code", (value) => /<pre\b/u.test(value)],
+    ["table", (value) => /<table\b/u.test(value)],
+    ["task-list", (value) => hasElementWithClass(value, ["md-task-list-item"])],
+    [
+      "footnote",
+      (value) => hasElementWithClass(value, ["footnote-ref", "footnotes"])
+    ],
+    // katex-error 是公式语法错误时的占位，文档仍然使用了公式
+    ["katex", (value) => hasElementWithClass(value, ["katex", "katex-error"])],
+    ["mermaid", (value) => hasElementWithClass(value, ["mermaid"])],
+    // md-echarts-error 是图表配置无效时的占位，文档仍然使用了图表
+    [
+      "echarts",
+      (value) => hasElementWithClass(value, ["md-echarts", "md-echarts-error"])
+    ]
   ];
 
   return featureChecks
-    .filter(([, pattern]) => pattern.test(html))
+    .filter(([, check]) => check(html))
     .map(([feature]) => feature);
 }
 
