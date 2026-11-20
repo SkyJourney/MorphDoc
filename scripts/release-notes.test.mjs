@@ -280,4 +280,3 @@ test("发布前校验：提交正文中的占位标记不阻止发布，人工�
   assert.equal(problems.length, 1);
   assert.match(problems[0], /仍含“【待补充】”标记/u);
 });
-
