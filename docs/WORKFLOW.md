@@ -48,6 +48,7 @@ pnpm run ci:local
 | 任务名（即状态检查名） | 平台 | 内容 |
 | --- | --- | --- |
 | `Whitespace Check` | Linux | 与基线比较的 `git diff --check` |
+| `Actionlint` | Linux | 工作流的语法与表达式检查（`actionlint`） |
 | `Type Check` | Linux | `pnpm run typecheck` |
 | `Build` | Linux | `pnpm run build` |
 | `Test (ubuntu-latest)` | Linux | `pnpm test` |
@@ -66,6 +67,12 @@ pnpm run ci:local
 - 所有任务共用 [`.github/actions/setup`](../.github/actions/setup/action.yml)：
   按 `packageManager` 安装 pnpm，安装 Node.js 22，执行
   `pnpm install --frozen-lockfile`；测试任务额外安装 Playwright Chromium。
+- `Actionlint` 下载官方发行包并校验固定的 sha256（与 Dockerfile 固定 Pandoc 同一做法），
+  不使用第三方 action。升级版本时同时更新 `ci.yml` 里的版本号与 sha256。它关闭了
+  `shellcheck` 与 `pyflakes`：两者的版本随 runner 镜像变化，会让必需检查出现与 PR 无关
+  的失败。只检查 `.github/workflows/*.yml`，复合 action 的 `action.yml` 不是工作流，
+  传给它会产生假错误。本地等价命令：
+  `actionlint -shellcheck= -pyflakes= .github/workflows/*.yml`。
 - 依赖 Microsoft Word、WPS 的视觉验证脚本只能在装有 Office 的机器上执行，
   不在 CI 范围内。
 
@@ -229,8 +236,8 @@ gh workflow run release.yml --ref <分支名>
 注意：
 
 - **改动发布相关文件的 PR 不会自动演练**（工作流、归集脚本、桌面打包配置、`deploy/`
-  等）。这类改动合并前，应当在 PR 分支上手动运行一次演练；CI 只会校验它们的语法与
-  测试，发现不了构建与归集阶段的问题。
+  等）。这类改动合并前，应当在 PR 分支上手动运行一次演练；CI 的 `Actionlint` 只能守住
+  工作流的语法与表达式，发现不了构建与归集阶段的问题。
 - 同一引用上的新演练会取消仍在进行的旧演练；标签发布永不取消。
 - 演练在缺少 `docs/releases/v<version>.md` 时只给出警告，真实发布则会失败，所以要留意
   演练日志里的警告。
@@ -278,6 +285,7 @@ gh workflow run release.yml --ref <分支名>
 设置中选择）：
 
 - `Whitespace Check`
+- `Actionlint`
 - `Type Check`
 - `Build`
 - `Test (ubuntu-latest)`
