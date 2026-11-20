@@ -13,9 +13,16 @@
  *   node scripts/version.mjs check --tag <tag> 同时校验标签等于 v<版本>（发布时使用）
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  formatLocalDate,
+  hasChangelogSection,
+  insertChangelogSection,
+  placeholder,
+  prepareRelease
+} from "./release-notes.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -233,35 +240,115 @@ export function setVersion(root, version) {
   return changes;
 }
 
+/**
+ * 发布准备：同步版本号，并生成 CHANGELOG 章节与发行说明骨架。
+ *
+ * 全部内容先计算、再写入：任何一步失败都不会留下只完成一半的状态。拒绝覆盖已存在的
+ * CHANGELOG 章节或发行说明，避免误伤已发布版本的记录。
+ *
+ * @param {string} root 仓库根
+ * @param {string} version 已规范化的目标版本
+ * @param {{ date?: string }} [options] 日期，默认本地今天；测试时可注入
+ * @returns {{ changes: object[], written: string[], warnings: string[] }}
+ */
+export function setRelease(root, version, options = {}) {
+  const date = options.date ?? formatLocalDate(new Date());
+  const changelogPath = join(root, "CHANGELOG.md");
+  const notesRelative = `docs/releases/v${version}.md`;
+  const notesPath = join(root, notesRelative);
+
+  const changelog = readFileSync(changelogPath, "utf8");
+  if (hasChangelogSection(changelog, version)) {
+    throw new Error(`CHANGELOG.md 已存在 [${version}] 章节，拒绝覆盖`);
+  }
+  if (existsSync(notesPath)) {
+    throw new Error(`发行说明已存在，拒绝覆盖：${notesRelative}`);
+  }
+
+  const documents = prepareRelease(root, { version, date });
+  const nextChangelog = insertChangelogSection(changelog, documents.changelogSection);
+  // 清单先于其他文件计算与写入：清单校验失败时，CHANGELOG 与发行说明都还没有被改动
+  const changes = setVersion(root, version);
+  writeFileSync(changelogPath, nextChangelog, "utf8");
+  mkdirSync(dirname(notesPath), { recursive: true });
+  writeFileSync(notesPath, documents.releaseNotes, "utf8");
+  return {
+    changes,
+    written: ["CHANGELOG.md", notesRelative],
+    warnings: documents.warnings
+  };
+}
+
+/**
+ * 发布前的发行说明校验：CHANGELOG 章节存在，发行说明存在且已补全。
+ *
+ * @param {string} root 仓库根
+ * @param {string} version 版本号
+ * @returns {string[]} 问题列表
+ */
+export function collectReleaseProblems(root, version) {
+  const problems = [];
+  const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+  if (!hasChangelogSection(changelog, version)) {
+    problems.push(`CHANGELOG.md 缺少 [${version}] 章节`);
+  }
+  const notesRelative = `docs/releases/v${version}.md`;
+  const notesPath = join(root, notesRelative);
+  if (!existsSync(notesPath)) {
+    problems.push(`缺少发行说明 ${notesRelative}`);
+  } else {
+    const notes = readFileSync(notesPath, "utf8");
+    if (notes.includes(placeholder)) {
+      problems.push(`${notesRelative} 仍含“${placeholder}”标记，发布前必须补全`);
+    }
+  }
+  return problems;
+}
+
 function main(argv) {
   const [command, ...rest] = argv;
   if (command === "set") {
     const version = normalizeVersion(rest[0]);
-    for (const { path, from, to } of setVersion(repositoryRoot, version)) {
+    const result = setRelease(repositoryRoot, version);
+    for (const { path, from, to } of result.changes) {
       process.stdout.write(`${path}: ${from ?? "(无)"} -> ${to}\n`);
     }
+    for (const path of result.written) {
+      process.stdout.write(`已生成：${path}\n`);
+    }
+    for (const warning of result.warnings) {
+      process.stdout.write(`注意：${warning}\n`);
+    }
+    process.stdout.write(`\n请补全 docs/releases/v${version}.md 中的【待补充】部分后再提交发布。\n`);
     return 0;
   }
   if (command === "check") {
     let tag;
+    let release = false;
     for (let index = 0; index < rest.length; index += 1) {
       if (rest[index] === "--tag" && rest[index + 1]) {
         tag = rest[index + 1];
         index += 1;
+      } else if (rest[index] === "--release") {
+        release = true;
       } else {
         throw new Error(`未知参数：${rest[index]}`);
       }
     }
     const { version, problems } = collectProblems(tag === undefined ? {} : { tag });
+    if (release && version) {
+      problems.push(...collectReleaseProblems(repositoryRoot, version));
+    }
     if (problems.length > 0) {
       process.stderr.write(`版本校验失败：\n${problems.map((line) => `  - ${line}`).join("\n")}\n`);
       return 1;
     }
-    process.stdout.write(`版本校验通过：${version}\n`);
+    process.stdout.write(`版本校验通过：${version}${release ? "（含发行说明）" : ""}\n`);
     return 0;
   }
-  throw new Error("用法：node scripts/version.mjs set <版本> | check [--tag <标签>]");
+  throw new Error("用法：node scripts/version.mjs set <版本> | check [--tag <标签>] [--release]");
 }
+
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
