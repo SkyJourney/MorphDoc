@@ -118,7 +118,7 @@ pnpm run verify:docker-font-pack
 | 环境变量 | 默认值 | 说明 |
 | --- | ---: | --- |
 | `MORPHDOC_IMAGE` | `morphdoc:local` | 构建和运行的镜像标签 |
-| `MORPHDOC_RUNTIME_BASE_IMAGE` | `node:22-bookworm-slim` | 可选运行时基础镜像 |
+| `MORPHDOC_RUNTIME_BASE_IMAGE` | `node:26-bookworm-slim` | 可选运行时基础镜像 |
 | `MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME` | `0` | 是否复用基础镜像中的 Chromium |
 | `MORPHDOC_PORT` | `8080` | 宿主机监听端口 |
 | `MORPHDOC_THEME_DIR` | `../.local/themes` | 宿主机主题目录 |

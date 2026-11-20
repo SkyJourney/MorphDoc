@@ -57,7 +57,7 @@ pandoc：161,618,224 字节
 
 <https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-linux-amd64.tar.gz>
 
-该程序已在 `node:22-bookworm-slim` 中验证：
+该程序已在 `node:26-bookworm-slim`（amd64）中验证，哈希与 Dockerfile 固定值一致：
 
 ```text
 pandoc 3.9.0.2
