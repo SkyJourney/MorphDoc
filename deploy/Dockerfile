@@ -78,6 +78,16 @@ COPY packages/preview-engine/package.json packages/preview-engine/package.json
 COPY packages/renderer/package.json packages/renderer/package.json
 COPY packages/semantic-document/package.json packages/semantic-document/package.json
 RUN pnpm install --frozen-lockfile --prod --filter @morphdoc/server...
+# pnpm 的 workspace 包各自持有 node_modules，其符号链接使用相对路径指向根的 .pnpm 存储。
+# 运行层只复制根 node_modules 会使这些链接断开（服务报 Cannot find package fastify）。
+# 这里把全部 workspace 包的 node_modules 原样收集到 /app-deps，保留相对结构，并在构建期断言
+# server 的依赖可解析，避免把缺陷留到容器启动时才暴露。
+RUN set -eu; mkdir -p /app-deps; \
+    for d in $(find /app -path /app/node_modules -prune -o -name node_modules -type d -print -prune); do \
+      rel="${d#/app/}"; mkdir -p "/app-deps/$(dirname "$rel")"; cp -a "$d" "/app-deps/$rel"; \
+    done; \
+    mkdir -p /app-deps/node_modules && cp -a /app/node_modules/. /app-deps/node_modules/; \
+    test -e /app-deps/apps/server/node_modules/fastify/package.json
 
 FROM node:26-bookworm-slim AS pandoc-runtime
 
@@ -149,13 +159,16 @@ COPY --chown=pwuser:pwuser packages/application/package.json packages/applicatio
 COPY --chown=pwuser:pwuser packages/markdown-echarts/package.json packages/markdown-echarts/package.json
 COPY --chown=pwuser:pwuser packages/preview-engine/package.json packages/preview-engine/package.json
 COPY --chown=pwuser:pwuser packages/renderer/package.json packages/renderer/package.json
-COPY --chown=pwuser:pwuser --from=production-dependencies /app/node_modules ./node_modules
+# 复制完整依赖树（含各 workspace 包的 node_modules），与 /app-deps 的相对结构一致。
+COPY --chown=pwuser:pwuser --from=production-dependencies /app-deps/ ./
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN if [ "${REUSE_PLAYWRIGHT_RUNTIME}" = "1" ]; then \
       test -x /ms-playwright/chromium-*/chrome-linux/chrome \
       || test -x /ms-playwright/chromium-*/chrome-linux64/chrome; \
     else \
-      npx playwright install --with-deps chromium; \
+      # 必须使用锁定版本的 CLI。在 /app 下直接 npx 找不到本地包，会拉取最新版 playwright，
+      # 其 Chromium 修订号与服务所需的不一致，导致启动时找不到浏览器。
+      cd /app/apps/server && ./node_modules/.bin/playwright install --with-deps chromium; \
     fi \
     && chown -R pwuser:pwuser /ms-playwright
 
