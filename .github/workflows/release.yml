@@ -1,30 +1,20 @@
 name: Release
 
-# 三种触发方式共用同一条构建与归集链路，只有 publish 任务按触发方式分叉：
+# 版本标签是发布的唯一触发器，且每次都构建完整的一套产物（Windows、macOS 两种架构、
+# Docker 镜像），保证“一个版本就是一套完整、可对应校验和的发行物”。
 #   - 推送 v*.*.* 标签：构建、归集并真实发布 GitHub Release；
-#   - 修改发布相关文件的 PR：完整演练构建与归集，不发布；
-#   - 手动触发：同样只演练，不发布。
+#   - 手动触发（workflow_dispatch）：在所选分支或提交上完整演练构建与归集，不发布。
+# 不再由 Pull Request 触发：演练改为发版前手动运行，见 docs/WORKFLOW.md 第 5 节。
 on:
   push:
     tags:
       - 'v*.*.*'
-  pull_request:
-    branches: [main]
-    paths:
-      - '.github/workflows/release.yml'
-      - '.github/actions/**'
-      - 'scripts/stage-release.mjs'
-      - 'apps/desktop/electron-builder.config.cjs'
-      - 'apps/desktop/package.json'
-      - 'apps/desktop/scripts/**'
-      - 'apps/desktop/build/**'
-      - 'deploy/**'
   workflow_dispatch:
 
-# 标签发布永不取消；PR 演练的旧运行可以被新运行取代。
+# 标签发布永不取消；同一引用上的手动演练可以被新的演练取代。
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
 
 permissions:
   contents: read
@@ -72,6 +62,10 @@ jobs:
               echo "::error::缺少发行说明 docs/releases/v${version}.md"
               exit 1
             fi
+          elif [ ! -s "docs/releases/v${version}.md" ]; then
+            # 演练不会因此失败，但真实发布会：在演练阶段就把问题暴露出来，
+            # 而不是等到打标签之后才发现标签已推送、发布却失败
+            echo "::warning::缺少发行说明 docs/releases/v${version}.md，真实发布（推送标签）会因此失败"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "publish=${publish}" >> "$GITHUB_OUTPUT"
