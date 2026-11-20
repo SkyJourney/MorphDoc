@@ -6,7 +6,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
       args:
-        RUNTIME_BASE_IMAGE: ${MORPHDOC_RUNTIME_BASE_IMAGE:-node:22-bookworm-slim}
+        RUNTIME_BASE_IMAGE: ${MORPHDOC_RUNTIME_BASE_IMAGE:-node:26-bookworm-slim}
         REUSE_PLAYWRIGHT_RUNTIME: ${MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME:-0}
     image: "${MORPHDOC_IMAGE:-morphdoc:local}"
     init: true

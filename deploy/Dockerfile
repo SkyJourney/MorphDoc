@@ -1,16 +1,21 @@
 # syntax=docker/dockerfile:1
 
-ARG RUNTIME_BASE_IMAGE=node:22-bookworm-slim
+ARG RUNTIME_BASE_IMAGE=node:26-bookworm-slim
 
-FROM node:22-bookworm-slim AS build
+FROM node:26-bookworm-slim AS build
 
 WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     ELECTRON_SKIP_BINARY_DOWNLOAD=1 \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-RUN corepack enable
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+# Node 26 官方镜像已不再自带 corepack，因此按根 package.json 的 packageManager 字段
+# 直接用 npm 安装同一版本的 pnpm。版本只在 package.json 中维护，这里不写死数字。
+COPY package.json ./
+RUN PNPM_VERSION="$(node -p "require('./package.json').packageManager.replace(/^pnpm@/, '')")" \
+    && npm install -g "pnpm@${PNPM_VERSION}" \
+    && test "$(pnpm -v)" = "${PNPM_VERSION}"
+COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/desktop/package.json apps/desktop/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY apps/web/package.json apps/web/package.json
@@ -44,15 +49,20 @@ RUN pnpm --filter @morphdoc/markdown-echarts run build \
     && pnpm --filter @morphdoc/web run build \
     && pnpm --filter @morphdoc/server run build
 
-FROM node:22-bookworm-slim AS production-dependencies
+FROM node:26-bookworm-slim AS production-dependencies
 
 WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     ELECTRON_SKIP_BINARY_DOWNLOAD=1 \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-RUN corepack enable
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+# Node 26 官方镜像已不再自带 corepack，因此按根 package.json 的 packageManager 字段
+# 直接用 npm 安装同一版本的 pnpm。版本只在 package.json 中维护，这里不写死数字。
+COPY package.json ./
+RUN PNPM_VERSION="$(node -p "require('./package.json').packageManager.replace(/^pnpm@/, '')")" \
+    && npm install -g "pnpm@${PNPM_VERSION}" \
+    && test "$(pnpm -v)" = "${PNPM_VERSION}"
+COPY pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/desktop/package.json apps/desktop/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY apps/web/package.json apps/web/package.json
@@ -69,7 +79,7 @@ COPY packages/renderer/package.json packages/renderer/package.json
 COPY packages/semantic-document/package.json packages/semantic-document/package.json
 RUN pnpm install --frozen-lockfile --prod --filter @morphdoc/server...
 
-FROM node:22-bookworm-slim AS pandoc-runtime
+FROM node:26-bookworm-slim AS pandoc-runtime
 
 ARG PANDOC_VERSION=3.9.0.2
 ARG PANDOC_LINUX_AMD64_URL=https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-linux-amd64.tar.gz
