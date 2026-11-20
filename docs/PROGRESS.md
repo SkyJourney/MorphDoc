@@ -83,6 +83,33 @@
 - 真实 Chromium 中确认 SVG 被绘制、渲染尺寸非零，路径绘制的 SVG 的 `viewBox` 被浏览器
   还原为驼峰。
 
+### 公式显示的 3 个深层问题（真实浏览器逐像素对比发现）
+
+放行 SVG 之后，用真实 Chromium 对 139 个公式做 KaTeX 原始输出与过滤后输出的逐像素
+对比，又发现三个单元测试与类型检查都发现不了的显示错误：
+
+1. **安全过滤器还丢弃了若干结构性内联样式。** `left` 缺失时 `\vec`、`\hat` 偏向一侧；
+   `color:transparent` 缺失时 `\phantom{x} y` 把本该隐藏的 `x` 显示出来；`border-*`、
+   `bottom`、`margin` 缺失时数组的 `|` 列分隔线消失、`\rule` 缩成零尺寸。按 KaTeX 的
+   实际取值逐属性放行，`color` 只放行 `transparent`，`border-right-style` 只放行
+   `solid` 与 `dashed`，`margin` 只接受 1 到 4 个以 `em` 为单位的数值。
+2. **生成公式标记的 KaTeX 与提供样式表的 KaTeX 版本错开。** 渲染器经
+   `@mdit/plugin-katex` 使用 KaTeX 0.19，而 `apps/web` 打包的样式表来自 0.16；0.19 给
+   19 个 class 加了 `katex-` 前缀，旧样式表不认识新名字，上标、下标、分式和上下限的
+   字号全部偏大，数组的 `\hline` 不显示。130 个公式中 95 个在应用实际使用的样式表下
+   显示不一致，且没有任何报错。已将 `apps/web` 升到 `^0.19.1`，并新增版本一致性守卫
+   （`scripts/katex-version-consistency.test.mjs`，降级后会失败）。
+3. **全局 `svg { max-width: 100% }` 把 `\vec` 的箭头夹成 0 宽。** 该 SVG 是
+   `position:absolute`，参照物 `.accent-body` 的宽度按 KaTeX 设计为 0。为
+   `.katex svg` 设置 `max-width: none`。
+
+每个新放行的属性做了反向验证（撤销后测试必须失败）7 项与变异验证（故意放宽取值）8 项，
+共 15 项全部被检出；`.katex svg` 规则撤销后 e2e 准确失败在“第 8 个 SVG 宽度为 0”。
+
+**产品决定待定：** `\color{red}`、`\colorbox` 等用户颜色命令的颜色目前被移除，公式一律
+使用主题颜色。支持用户颜色需要为颜色值设计严格规则，并评估走 Pandoc 的 DOCX 公式是否
+一致，已在 `katex-style-parity.test.ts` 中如实记录当前行为。
+
 ### 仍未验证或待办
 
 - **标签发布从未真实执行过。** 演练覆盖了构建与归集，`publish` 任务与
