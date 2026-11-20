@@ -171,16 +171,21 @@ pnpm run test:e2e
 
 ### 5.1 发布前准备
 
-1. 运行 `pnpm run version:set <版本>`，同时写入根 `package.json` 与
-   `apps/desktop/package.json`。版本号只在这两个文件中手写，其余位置（运行时默认值、
-   测试断言、文档示例）都读取它们或使用占位符，`pnpm test` 中的 `version:check` 会拦截
-   写死的当前版本号。`version:set` 只改版本字段，不改其他内容。
-2. 编写 `docs/releases/v<version>.md`，它将作为 GitHub Release 正文。
-3. 更新 `CHANGELOG.md` 与 `docs/PROGRESS.md`。
-4. 通过 Pull Request 合并。合并提交即发布提交，信息使用 `release:` 前缀，
-   简体中文正文需完整列出新增能力、问题修复、兼容性或部署变化、验证结果和
-   发布产物，不得只写版本号。
-5. **打标签之前先演练**：Release 工作流不再由 Pull Request 触发，所以发版 PR 不会自动
+1. 运行 `pnpm run version:set <版本>`，一条命令完成三件事：
+   - 同步写入根 `package.json` 与 `apps/desktop/package.json` 的版本字段；
+   - 从上一个版本标签到 HEAD 的提交，生成 `CHANGELOG.md` 的新章节，插在 `[Unreleased]`
+     之后；
+   - 生成 `docs/releases/v<版本>.md` 骨架，其中自动部分来自提交（类型前缀与 PR 编号）、
+     `deploy/` 的文件变化、依赖版本变化与 Pandoc 运行时版本。
+   版本号只在两个 `package.json` 中手写，其余位置读取它们或使用占位符。
+2. 补全发行说明中所有 `【待补充】` 标记：概述、验证结果、迁移说明。**发布校验会拒绝
+   仍含该标记的文件**，所以未补全时推不出标签。
+3. 提交发布提交，信息使用 `release:` 前缀，简体中文正文需完整列出新增能力、问题修复、
+   兼容性或部署变化、验证结果和发布产物，不得只写版本号。
+4. 更新 `docs/PROGRESS.md`。
+5. 通过 Pull Request 合并。
+6. **打标签之前先演练**：Release 工作流不再由 Pull Request 触发，所以发版 PR 不会自动
+   演练。在发布提交上手动运行一次演练，见 5.4。
    演练。在发布提交（合并前的 PR 分支，或合并后的 `main`）上手动运行一次演练，见 5.4。
 
 ### 5.2 打标签并发布
