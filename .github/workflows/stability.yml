@@ -34,6 +34,9 @@ jobs:
         with:
           playwright: 'true'
 
+      # 临时的故意损坏（反向验证 Actionlint 用，随后会被还原）：evnt 是拼错的上下文属性
+      - run: echo ${{ github.evnt.name }}
+
       # 手动输入经环境变量传入，由脚本做严格整数与范围校验，不拼接进命令行。
       - name: Run repeated tests
         shell: bash
