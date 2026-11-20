@@ -206,6 +206,16 @@ const defaultParagraphCloseRenderer =
   markdown.renderer.rules.paragraph_close;
 const lengthStylePattern = /^-?\d+(?:\.\d+)?(?:em|ex|px|%)$/u;
 const tableTextAlignStylePattern = /^(?:left|center|right)$/u;
+// 以下三条规则服务于 KaTeX 的结构性内联样式，取值范围取自它对各类公式的实际输出
+// （数组的 \hline 与列分隔线、\rule、\vdots、\phantom），不接受其他写法。
+// 数组列分隔线的实线与虚线
+const borderLineStylePattern = /^(?:solid|dashed)$/u;
+// 数组列间距形如 "0 -0.02em"：1 到 4 个数值，0 可以不带单位，其余只接受 em
+const marginShorthandStylePattern =
+  /^-?\d+(?:\.\d+)?(?:em)?(?:\s+-?\d+(?:\.\d+)?(?:em)?){0,3}$/u;
+// \phantom 系列通过 color:transparent 隐藏内容。只放行 transparent：缺少它时本该隐藏的
+// 内容会显示出来；而 red、#ff0000 之类的颜色值仍被移除，即不支持用户给公式上色
+const transparentColorStylePattern = /^transparent$/u;
 
 interface MarkdownRenderEnvironment {
   warnings?: string[];
@@ -425,13 +435,24 @@ const safeHtmlOptions: sanitizeHtml.IOptions = {
     span: {
       height: [lengthStylePattern],
       top: [lengthStylePattern],
+      // 重音符（\vec、\hat、\bar 等）的 accent-body 靠 left:-0.2077em 这样的偏移与底字居中；
+      // 缺少它时重音符的 SVG 虽然被保留，位置却整体偏向一侧
+      left: [lengthStylePattern],
       width: [lengthStylePattern],
       "min-width": [lengthStylePattern],
       "margin-left": [lengthStylePattern],
       "margin-right": [lengthStylePattern],
       "padding-left": [lengthStylePattern],
       "vertical-align": [lengthStylePattern],
-      "border-bottom-width": [lengthStylePattern]
+      "border-bottom-width": [lengthStylePattern],
+      // 以下属性是 KaTeX 绘制数组分隔线、\rule、\vdots 与 \phantom 所必需的。缺少时：
+      // 数组的 | 列分隔线消失，\rule 缩成零尺寸，\phantom 的隐藏内容显示出来
+      "border-right-width": [lengthStylePattern],
+      "border-top-width": [lengthStylePattern],
+      "border-right-style": [borderLineStylePattern],
+      bottom: [lengthStylePattern],
+      margin: [marginShorthandStylePattern],
+      color: [transparentColorStylePattern]
     },
     // KaTeX 的 \vec 等命令会给 svg 设置 width:0.471em 这样的内联宽度
     svg: {
