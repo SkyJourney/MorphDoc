@@ -19,7 +19,8 @@ services:
       PDF_CONCURRENCY: "${PDF_CONCURRENCY:-1}"
       PDF_MAX_QUEUE: "${PDF_MAX_QUEUE:-4}"
       PDF_TIMEOUT_MS: "${PDF_TIMEOUT_MS:-120000}"
-      APP_VERSION: "${MORPHDOC_APP_VERSION:-0.6.4}"
+      # 留空时服务读取镜像内 /app/package.json 的版本；仅需显式覆盖时才设置 MORPHDOC_APP_VERSION
+      APP_VERSION: "${MORPHDOC_APP_VERSION:-}"
       FONT_PACK_ROOT: /app/.local/font-packs
     volumes:
       - "${MORPHDOC_THEME_DIR:-../.local/themes}:/app/.local/themes:ro"

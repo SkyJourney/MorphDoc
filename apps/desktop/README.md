@@ -57,8 +57,8 @@ pnpm --filter @morphdoc/desktop run verify:pandoc-runtime
 ```
 
 版本化目录包、NSIS `Setup.exe` 和 ZIP 输出到
-`apps/desktop/out/v0.6.4/`。该目录被 Git 忽略。正式安装包为
-`MorphDoc-0.6.4-x86_64-Setup.exe`，ZIP 作为免安装
+`apps/desktop/out/v<版本>/`。该目录被 Git 忽略。正式安装包为
+`MorphDoc-<版本>-x86_64-Setup.exe`，ZIP 作为免安装
 辅助包；当前未配置代码签名，Windows 首次运行可能显示“未知发布者”
 提示。
 

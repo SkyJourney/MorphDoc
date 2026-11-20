@@ -175,7 +175,10 @@ const environment = {
   ...buildEnvironment,
   MORPHDOC_PORT: String(port),
   MORPHDOC_THEME_DIR: themeRoot,
-  MORPHDOC_APP_VERSION: "0.6.4"
+  // 显式传入当前版本（读取自根 package.json），不写死字面量
+  MORPHDOC_APP_VERSION: JSON.parse(
+    await readFile(path.join(repositoryRoot, "package.json"), "utf8")
+  ).version
 };
 const compose = [
   "compose",

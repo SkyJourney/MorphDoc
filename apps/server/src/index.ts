@@ -1,3 +1,4 @@
+import { resolveAppVersion } from "./app-version.js";
 import { buildApp } from "./app.js";
 
 const port = Number.parseInt(process.env.PORT ?? "3001", 10);
@@ -10,7 +11,7 @@ const app = buildApp({
     ? {
         fontPacks: {
           roots: [fontPackRoot],
-          appVersion: process.env.APP_VERSION ?? "0.6.4"
+          appVersion: resolveAppVersion()
         }
       }
     : {})

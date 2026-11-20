@@ -74,10 +74,10 @@
       "branches": 27
     },
     "server": {
-      "lines": 74,
+      "lines": 75,
       "statements": 74,
-      "functions": 69,
-      "branches": 60
+      "functions": 70,
+      "branches": 62
     },
     "desktop": {
       "lines": 24,

@@ -14,7 +14,7 @@ function readProjectFile(relativePath: string) {
   return readFileSync(`${projectRoot}/${relativePath}`, "utf8");
 }
 
-describe("Docker v0.6.4 部署契约", () => {
+describe("Docker 部署契约", () => {
   it("完整构建并复制 DOCX 运行时工作区和 Lua Filter", () => {
     const dockerfile = readProjectFile("deploy/Dockerfile");
     const workspaces = [
@@ -81,9 +81,9 @@ describe("Docker v0.6.4 部署契约", () => {
       "COPY --chown=pwuser:pwuser output/font-packs/root /app/.local/font-packs"
     );
     expect(dockerfile).toContain("FONT_PACK_ROOT=/app/.local/font-packs");
-    expect(compose).toContain(
-      'APP_VERSION: "${MORPHDOC_APP_VERSION:-0.6.4}"'
-    );
+    // 版本号不再写死默认值：留空时服务读取镜像内的 package.json
+    expect(compose).toContain('APP_VERSION: "${MORPHDOC_APP_VERSION:-}"');
+    expect(compose).not.toMatch(/MORPHDOC_APP_VERSION:-\d/u);
     expect(dockerignore.split(/\r?\n/u)).toContain(".local");
     expect(dockerignore).toContain("!output/font-packs/root/**");
     expect(dockerfileIgnore).toBe(dockerignore);
@@ -96,6 +96,24 @@ describe("Docker v0.6.4 部署契约", () => {
 
     expect(manifest.scripts?.["verify:docker-font-pack"]).toContain(
       "deploy/verify-font-pack-compose.mjs"
+    );
+  });
+
+  it("运行层带有根 package.json，服务据此确定应用版本", () => {
+    // 服务在 APP_VERSION 为空时读取 <应用根>/package.json（相对 apps/server/dist 为
+    // ../../../package.json）。Dockerfile 若不再把它复制进运行层，容器会在启动时报错退出，
+    // 而 CI 并不运行镜像，只能靠这条静态契约守住
+    const dockerfile = readProjectFile("deploy/Dockerfile");
+    const runtime = dockerfile.slice(dockerfile.indexOf("AS runtime"));
+
+    expect(runtime).toContain("WORKDIR /app");
+    expect(runtime).toContain("COPY --chown=pwuser:pwuser package.json ./");
+    expect(runtime).toContain(
+      "COPY --chown=pwuser:pwuser --from=build /app/apps/server/dist ./apps/server/dist"
+    );
+    // 入口脚本按该布局启动服务
+    expect(readProjectFile("deploy/entrypoint.sh")).toContain(
+      "node /app/apps/server/dist/index.js"
     );
   });
 });
