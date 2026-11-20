@@ -26,7 +26,7 @@ flowchart LR
 
 ## 2. 本地验证
 
-环境要求 Node.js 22 或更高版本，pnpm 由 `package.json` 的 `packageManager`
+环境要求 Node.js 22 或更高版本（CI 与容器固定使用 `.nvmrc` 中的版本），pnpm 由 `package.json` 的 `packageManager`
 字段锁定（通过 Corepack 使用）。提交前运行：
 
 ```text
@@ -65,7 +65,7 @@ pnpm run ci:local
   永远通过，因此 PR 以 `origin/<目标分支>` 的共同祖先为基线，推送以
   `github.event.before` 为基线。
 - 所有任务共用 [`.github/actions/setup`](../.github/actions/setup/action.yml)：
-  按 `packageManager` 安装 pnpm，安装 Node.js 26，执行
+  按 `packageManager` 安装 pnpm，按 `.nvmrc` 安装 Node.js 26.13.1，执行
   `pnpm install --frozen-lockfile`；测试任务额外安装 Playwright Chromium。
 - `Actionlint` 下载官方发行包并校验固定的 sha256（与 Dockerfile 固定 Pandoc 同一做法），
   不使用第三方 action。升级版本时同时更新 `ci.yml` 里的版本号与 sha256。它关闭了

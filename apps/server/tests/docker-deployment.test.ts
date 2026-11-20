@@ -89,6 +89,22 @@ describe("Docker 部署契约", () => {
     expect(dockerfileIgnore).toBe(dockerignore);
   });
 
+  it("提供镜像冒烟验收命令，并把其单元测试纳入 pnpm test", () => {
+    const manifest = JSON.parse(
+      readProjectFile("package.json")
+    ) as PackageManifest;
+
+    expect(manifest.scripts?.["verify:docker-smoke"]).toContain(
+      "deploy/smoke-image.mjs"
+    );
+    expect(manifest.scripts?.["test:deploy-tools"]).toContain(
+      "deploy/smoke-image.test.mjs"
+    );
+    expect(manifest.scripts?.["test"]).toContain(
+      "pnpm run test:deploy-tools"
+    );
+  });
+
   it("提供显式真实 Docker 字体包验收命令", () => {
     const manifest = JSON.parse(
       readProjectFile("package.json")
@@ -115,5 +131,54 @@ describe("Docker 部署契约", () => {
     expect(readProjectFile("deploy/entrypoint.sh")).toContain(
       "node /app/apps/server/dist/index.js"
     );
+  });
+});
+
+describe("Node 版本锁定", () => {
+  // .nvmrc 是唯一来源；CI、容器基础镜像、compose 默认值与文档必须与它一致。
+  // 任何一处单独改动都会让这里失败，而不是在发布后才发现镜像与 CI 用了不同的 Node。
+  const nodeVersion = readProjectFile(".nvmrc").trim();
+
+  it(".nvmrc 是精确的 semver 版本，不是浮动的大版本", () => {
+    expect(nodeVersion).toMatch(/^\d+\.\d+\.\d+$/u);
+  });
+
+  it("Dockerfile 的基础镜像引用精确版本，三个阶段共用同一个 ARG", () => {
+    const dockerfile = readProjectFile("deploy/Dockerfile");
+
+    expect(dockerfile).toContain(
+      `ARG NODE_BASE_IMAGE=node:${nodeVersion}-bookworm-slim`
+    );
+    expect(dockerfile).toContain(
+      `ARG RUNTIME_BASE_IMAGE=node:${nodeVersion}-bookworm-slim`
+    );
+    expect(dockerfile.match(/^FROM \$\{NODE_BASE_IMAGE\} AS /gmu)).toHaveLength(3);
+    expect(dockerfile).not.toMatch(/^FROM node:/mu);
+  });
+
+  it("compose 的默认运行时镜像与 .nvmrc 一致", () => {
+    const compose = readProjectFile("deploy/compose.yaml");
+
+    expect(compose).toContain(
+      `\${MORPHDOC_RUNTIME_BASE_IMAGE:-node:${nodeVersion}-bookworm-slim}`
+    );
+  });
+
+  it("CI 复合 action 从 .nvmrc 读取 Node 版本，而不是另写一份", () => {
+    const action = readProjectFile(".github/actions/setup/action.yml");
+
+    expect(action).toContain("node-version-file: '.nvmrc'");
+    expect(action).not.toMatch(/node-version: '\d/u);
+  });
+
+  it("仓库中不再残留浮动的 Node 大版本镜像引用", () => {
+    for (const path of [
+      "deploy/Dockerfile",
+      "deploy/compose.yaml",
+      "deploy/README.md",
+      "docs/PANDOC_DISTRIBUTION.md"
+    ]) {
+      expect(readProjectFile(path), path).not.toMatch(/node:2[0-9]-bookworm/u);
+    }
   });
 });
