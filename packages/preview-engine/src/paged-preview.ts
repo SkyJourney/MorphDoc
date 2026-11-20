@@ -75,6 +75,13 @@ svg {
   max-width: 100%;
 }
 
+/* KaTeX 的重音符等内联 SVG 是 position:absolute，参照物 .accent-body 的宽度按设计为 0，
+   其尺寸完全由 KaTeX 自己的内联样式决定。上面的全局 max-width:100% 会把它们夹成 0 宽，
+   重音符箭头因此消失，所以公式内部的 SVG 不受这条约束。 */
+.katex svg {
+  max-width: none;
+}
+
 #write pre.md-fences,
 #write .md-code-pagination-chunk {
   min-width: 0;
