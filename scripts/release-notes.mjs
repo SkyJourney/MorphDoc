@@ -272,7 +272,10 @@ export function hasChangelogSection(text, version) {
  * @returns {string} 去掉折叠块后的文本
  */
 export function stripFoldedDetails(text) {
-  return text.replace(/<details>[\s\S]*?<\/details>/gu, "");
+  // 只匹配生成器写入的完整结构：<details><summary>…</summary> 开头，</details> 结尾。
+  // 提交正文中偶然出现的裸 <details> 字样（没有紧随的 <summary>）不会被当作折叠块，
+  // 避免从它一直删到后面某个无关的 </details>，误删人工撰写的段落。
+  return text.replace(/<details><summary>[\s\S]*?<\/summary>[\s\S]*?<\/details>/gu, "");
 }
 
 /**
