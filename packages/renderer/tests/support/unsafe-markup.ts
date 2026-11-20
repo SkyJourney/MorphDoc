@@ -16,7 +16,15 @@ const forbiddenTags = new Set([
   "link",
   "meta",
   "base",
-  "form"
+  "form",
+  // SVG 中能引用外部资源或触发行为的元素：渲染器只放行 KaTeX 用到的 svg、path、line
+  "use",
+  "image",
+  "foreignobject",
+  "animate",
+  "animatemotion",
+  "animatetransform",
+  "set"
 ]);
 
 /** 可承载 URL 的属性，其值不得使用可执行协议。 */
