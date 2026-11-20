@@ -14,7 +14,8 @@ import {
   parseRepositoryUrl,
   placeholder,
   prepareRelease,
-  releaseArtifactNames
+  releaseArtifactNames,
+  stripFoldedDetails
 } from "./release-notes.mjs";
 import { collectReleaseProblems, setRelease } from "./version.mjs";
 
@@ -250,4 +251,32 @@ test("发布前校验：缺少发行说明或 CHANGELOG 章节时报错", () => 
   const problems = collectReleaseProblems(directory, "0.2.0");
   assert.ok(problems.some((line) => /CHANGELOG\.md 缺少 \[0\.2\.0\] 章节/u.test(line)));
   assert.ok(problems.some((line) => /缺少发行说明 docs\/releases\/v0\.2\.0\.md/u.test(line)));
+});
+
+test("stripFoldedDetails 去掉折叠的提交正文，保留其余内容", () => {
+  const text = "概述\n\n<details><summary>#1 的完整说明</summary>\n\n【待补充】历史\n\n</details>\n\n结尾";
+  assert.equal(stripFoldedDetails(text), "概述\n\n\n\n结尾");
+});
+
+test("发布前校验：提交正文中的占位标记不阻止发布，人工部分的占位仍然阻止", () => {
+  // 回归：PR #6 的提交正文提到了占位标记，被原样折叠进发行说明后导致发布永远被拦截
+  const directory = sampleRepository();
+  setRelease(directory, "0.2.0", { date: "2026-02-01" });
+  const notesPath = join(directory, "docs/releases/v0.2.0.md");
+
+  writeFileSync(
+    notesPath,
+    "# MorphDoc v0.2.0\n\n## 概述\n\n已补全\n\n<details><summary>#1 的完整说明</summary>\n\n提到【待补充】只是历史\n\n</details>\n",
+    "utf8"
+  );
+  assert.deepEqual(collectReleaseProblems(directory, "0.2.0"), []);
+
+  writeFileSync(
+    notesPath,
+    "# MorphDoc v0.2.0\n\n## 概述\n\n【待补充】\n\n<details><summary>#1 的完整说明</summary>\n\n历史\n\n</details>\n",
+    "utf8"
+  );
+  const problems = collectReleaseProblems(directory, "0.2.0");
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /仍含“【待补充】”标记/u);
 });

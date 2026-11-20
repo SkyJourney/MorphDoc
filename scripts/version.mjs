@@ -21,7 +21,8 @@ import {
   hasChangelogSection,
   insertChangelogSection,
   placeholder,
-  prepareRelease
+  prepareRelease,
+  stripFoldedDetails
 } from "./release-notes.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -297,7 +298,8 @@ export function collectReleaseProblems(root, version) {
   if (!existsSync(notesPath)) {
     problems.push(`缺少发行说明 ${notesRelative}`);
   } else {
-    const notes = readFileSync(notesPath, "utf8");
+    // 只检查人工撰写的部分：折叠的提交正文是历史记录，不参与占位检查
+    const notes = stripFoldedDetails(readFileSync(notesPath, "utf8"));
     if (notes.includes(placeholder)) {
       problems.push(`${notesRelative} 仍含“${placeholder}”标记，发布前必须补全`);
     }

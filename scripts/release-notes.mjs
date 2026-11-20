@@ -262,6 +262,19 @@ export function hasChangelogSection(text, version) {
 }
 
 /**
+ * 去掉发行说明中折叠的提交正文（<details> 块），只保留需要人工撰写的部分用于占位检查。
+ *
+ * 提交正文是历史记录：即使某次提交的正文恰好提到了占位标记，也不应阻止本次发布。
+ * 占位标记只在人工撰写的段落里才有效。
+ *
+ * @param {string} text 发行说明全文
+ * @returns {string} 去掉折叠块后的文本
+ */
+export function stripFoldedDetails(text) {
+  return text.replace(/<details>[\s\S]*?<\/details>/gu, "");
+}
+
+/**
  * 把 git 远端地址转换为 GitHub 仓库的网页地址。
  *
  * @param {string} remote 远端地址（ssh 或 https 形式）
