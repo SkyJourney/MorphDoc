@@ -13,6 +13,28 @@ GitHub Release 页面正文的基础；构建产物、校验和及详细验收�
 
 - 暂无。
 
+## [0.6.5] - 2026-11-20
+
+### 新增
+
+- 版本号同步时生成 CHANGELOG 与发行说明骨架 ([#6](https://github.com/SkyJourney/MorphDoc/pull/6))
+
+### 修复
+
+- 折叠块的去除只匹配完整结构，不误删人工段落 ([#10](https://github.com/SkyJourney/MorphDoc/pull/10))
+- 发行说明末尾只保留一个换行 ([#9](https://github.com/SkyJourney/MorphDoc/pull/9))
+- 发行说明的占位检查忽略折叠的提交正文 ([#8](https://github.com/SkyJourney/MorphDoc/pull/8))
+- 修复渲染器与公式显示的已知缺陷并补充回归测试 ([#2](https://github.com/SkyJourney/MorphDoc/pull/2))
+
+### 变更
+
+- 临时仓库的 git 身份改为 SkyJourney ([#7](https://github.com/SkyJourney/MorphDoc/pull/7))
+- 统一版本号来源并建立版本校验 ([#5](https://github.com/SkyJourney/MorphDoc/pull/5))
+- 增加常驻的 Actionlint 检查 ([#4](https://github.com/SkyJourney/MorphDoc/pull/4))
+- Release 以版本标签为唯一触发器并改用手动演练 ([#3](https://github.com/SkyJourney/MorphDoc/pull/3))
+- 建立 CI/CD 流水线与测试体系 ([#1](https://github.com/SkyJourney/MorphDoc/pull/1))
+
+
 ## [0.6.4] - 2026-08-26
 
 ### 新增
