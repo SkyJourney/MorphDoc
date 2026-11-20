@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
         with:
           playwright: 'true'
@@ -49,7 +49,7 @@ jobs:
           fi
 
       # 视觉基线始终上传，便于在更新基线后直接下载并提交
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: e2e-screenshots
@@ -58,7 +58,7 @@ jobs:
           retention-days: 14
 
       # 失败时的差异图、trace 与 HTML 报告
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: e2e-report
