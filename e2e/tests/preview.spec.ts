@@ -87,6 +87,13 @@ interface ScenarioSpec {
   expect: Array<{ selector: string; atLeast: number }>;
   /** 为真时要求预览帧内全部图片都已成功解码（图表以静态 SVG 图片呈现）。 */
   imagesLoaded?: boolean;
+  /**
+   * 为真时要求公式里的内联 SVG 在真实浏览器中确实被绘制：渲染尺寸非零；由 path 绘制的
+   * SVG 还必须带驼峰的 viewBox（sanitize-html 输出小写 viewbox，由浏览器的 HTML 解析
+   * 还原）。划线类（\cancel 等）的 SVG 由百分比坐标的 line 绘制，KaTeX 本来就不给它们
+   * 设置 viewBox，因此不对其要求。
+   */
+  mathSvgRendered?: boolean;
   /** 是否生成视觉基线。 */
   visual: boolean;
 }
@@ -112,7 +119,22 @@ const scenarios: ScenarioSpec[] = [
   },
   {
     file: "math.md",
-    expect: [{ selector: ".katex", atLeast: 3 }],
+    // 高斯积分与三个根号：每个根号都由内联 SVG 绘制
+    expect: [
+      { selector: ".katex", atLeast: 3 },
+      { selector: ".katex svg", atLeast: 4 }
+    ],
+    mathSvgRendered: true,
+    visual: true
+  },
+  {
+    file: "math-svg.md",
+    expect: [
+      { selector: ".katex", atLeast: 10 },
+      { selector: ".katex svg path", atLeast: 10 },
+      { selector: ".katex svg line", atLeast: 3 }
+    ],
+    mathSvgRendered: true,
     visual: true
   },
   {
@@ -163,6 +185,30 @@ test.describe("预览渲染（功能）", () => {
             images.every((image) => (image as HTMLImageElement).naturalWidth > 0)
           );
         expect(allDecoded, "预览帧内全部图片均已成功解码").toBe(true);
+      }
+      if (scenario.mathSvgRendered) {
+        const report = await frame.locator(".katex svg").evaluateAll((svgs) =>
+          svgs.map((svg) => {
+            const box = svg.getBoundingClientRect();
+            return {
+              drawnByPath: svg.querySelector("path") !== null,
+              viewBox: svg.getAttribute("viewBox"),
+              width: box.width,
+              height: box.height
+            };
+          })
+        );
+        expect(report.length, "预览帧内公式 SVG 的数量").toBeGreaterThan(0);
+        for (const [index, item] of report.entries()) {
+          const label = `第 ${index + 1} 个公式 SVG`;
+          expect(item.width, `${label}的渲染宽度`).toBeGreaterThan(0);
+          expect(item.height, `${label}的渲染高度`).toBeGreaterThan(0);
+          if (item.drawnByPath) {
+            expect(item.viewBox, `${label}的 viewBox（驼峰）`).not.toBeNull();
+          }
+        }
+        // 确认确实覆盖到了 path 与 line 两类 SVG，避免断言因分类全空而形同虚设
+        expect(report.some((item) => item.drawnByPath), "存在由 path 绘制的 SVG").toBe(true);
       }
       expect(errors).toEqual([]);
     });

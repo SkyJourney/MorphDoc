@@ -56,19 +56,32 @@
 `web` 与 `desktop` 偏低是真实现状：界面和 Electron 主进程依赖真实浏览器或窗口，
 单元测试难以覆盖，由 E2E 补充。统计范围没有为美化数字而缩小。
 
-### 夹具测试发现的已知缺陷（未修复，用 `it.fails` 记录）
+### 夹具测试发现的 4 个缺陷（已修复）
 
-修复后对应用例会失败，提示删除记录。位置在
-`packages/renderer/tests/fixture-matrix.test.ts` 的“已知问题”。
+由 Markdown 夹具矩阵发现，最初以 `it.fails` 记录，随后在 `fix/renderer-known-defects`
+中修复，并改为正式的回归测试（`packages/renderer/tests/` 下的
+`front-matter-cache`、`feature-detection`、`sanitize-svg`）。
 
-1. **无效 Front Matter 第二次渲染起不再报错**：`gray-matter` 在解析前写入缓存，
-   失败后条目残留；同一份内容再次渲染时命中缓存，整段 YAML 被当作正文，标题被误取。
-   服务端与桌面端长驻，预览后导出 PDF 即可触发。仅 `render-markdown.ts` 一处调用，
-   传入选项 `matter(source, {})` 可绕过缓存。
+1. **无效 Front Matter 第二次渲染起不再报错**：`gray-matter` 在解析前写入全局缓存，
+   失败后条目残留，同一份内容再次渲染时命中缓存，整段 YAML 被当作正文，标题被误取。
+   缓存还以浅拷贝返回，多次调用会共享同一个 `data` 对象。修复为 `matter(source, {})`。
 2. **公式中的根号等 SVG 元素被安全过滤器移除**：KaTeX 用内联 `svg` 与 `path` 绘制
-   根号，渲染结果只剩空壳，`$\sqrt{\pi}$` 显示为 π，数学含义可能改变。
-3. 正文中的普通单词 `footnote` 被误判为启用脚注特性。
-4. 正文中的普通单词 `mermaid`、`katex` 被误判为启用对应特性。
+   根号、可拉伸箭头、宽重音符、上下括号、划线，渲染结果只剩空壳，`$\sqrt{\pi}$`
+   显示为 π。按 KaTeX 0.16 与 0.19 的实际输出精确放行 `svg`、`path`、`line` 和 11 个
+   属性，不放行 `xmlns`、`href`、`use`、`image`、`foreignObject`、`animate`、`set`、
+   `style` 元素和事件属性；`svg` 的 `style` 只允许 `width`。
+3. 正文中的普通单词 `footnote`、`mermaid`、`katex` 被误判为启用对应特性。改为只匹配真实
+   标签的 `class`，并保留 `katex-error`、`md-echarts-error` 两个占位。
+4. 代码块或行内代码里展示的 `class="katex"` 之类文本同样被误判，由上一条一并修复。
+
+验证方式：
+
+- 在仓库 74 份 Markdown 上对比新旧特性检测，70 份一致，另 4 份仅为旧逻辑误判（例如
+  本文件曾因正文提到这些词被判为同时使用公式、Mermaid、ECharts 与脚注），没有漏判。
+- 把 4 处修复还原后运行新测试，27 项断言真实失败；对 SVG 白名单做 6 种放宽变异
+  （放行 `use`、事件属性、`href`、任意 `style`、引用型属性、`script`），全部被检出。
+- 真实 Chromium 中确认 SVG 被绘制、渲染尺寸非零，路径绘制的 SVG 的 `viewBox` 被浏览器
+  还原为驼峰。
 
 ### 仍未验证或待办
 
