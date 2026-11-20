@@ -160,7 +160,7 @@ test("releaseArtifactNames 与 stage-release 产出的文件名一致", () => {
 // ---------------------------------------------------------------------------
 
 function git(cwd, args) {
-  return execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
+  return execFileSync("git", ["-c", "user.name=SkyJourney", "-c", "user.email=sky.jiang.s.z@gmail.com", "-c", "commit.gpgsign=false", ...args], {
     cwd,
     encoding: "utf8"
   });
