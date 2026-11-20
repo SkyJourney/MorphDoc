@@ -253,6 +253,20 @@ test("发布前校验：缺少发行说明或 CHANGELOG 章节时报错", () => 
   assert.ok(problems.some((line) => /缺少发行说明 docs\/releases\/v0\.2\.0\.md/u.test(line)));
 });
 
+test("发行说明末尾恰好只有一个换行，不会触发 git diff --check 的 EOF 空行错误", () => {
+  // 回归：生成的发行说明末尾多一个空行，git diff --check 报 new blank line at EOF，
+  // 在 CI 的空白检查中失败
+  const { releaseNotes } = buildReleaseDocuments({
+    version: "0.2.0",
+    date: "2026-02-01",
+    commits: [],
+    artifactNames: releaseArtifactNames("0.2.0")
+  });
+
+  assert.ok(releaseNotes.endsWith("\n"), "应以换行结尾");
+  assert.ok(!releaseNotes.endsWith("\n\n"), "不应以空行结尾");
+});
+
 test("stripFoldedDetails 去掉折叠的提交正文，保留其余内容", () => {
   const text = "概述\n\n<details><summary>#1 的完整说明</summary>\n\n【待补充】历史\n\n</details>\n\n结尾";
   assert.equal(stripFoldedDetails(text), "概述\n\n\n\n结尾");

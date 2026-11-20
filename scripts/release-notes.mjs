@@ -184,7 +184,8 @@ export function renderReleaseNotes({
   lines.push(`${placeholder} 迁移步骤与兼容性说明；没有破坏性变化时写明“无”。`, "");
 
   lines.push("## 发行产物", "", ...artifactNames.map((name) => `- \`${name}\``), "");
-  return `${lines.join("\n")}\n`;
+  // 末尾只保留一个换行：lines 末尾的空字符串会让拼接结果多出一个空行
+  return `${lines.join("\n").replace(/\s+$/u, "")}\n`;
 }
 
 function renderDependencyChange(change) {
