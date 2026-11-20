@@ -39,8 +39,8 @@ RUN pnpm --filter @morphdoc/markdown-echarts run build \
     && pnpm --filter @morphdoc/font-pack-registry run build \
     && pnpm --filter @morphdoc/docx-engine run build \
     && pnpm --filter @morphdoc/renderer run build \
-    && pnpm --filter @morphdoc/application run build \
     && pnpm --filter @morphdoc/preview-engine run build \
+    && pnpm --filter @morphdoc/application run build \
     && pnpm --filter @morphdoc/web run build \
     && pnpm --filter @morphdoc/server run build
 

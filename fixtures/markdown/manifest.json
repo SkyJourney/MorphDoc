@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "description": "静态 Markdown 夹具清单。features 为渲染后必须识别出的特性（子集断言），absent 为必须不出现的特性；error 表示该夹具应被渲染器以指定错误拒绝。CRLF、BOM 与纯空白输入由 generate.mjs 在测试时派生，不入库。",
+  "static": {
+    "gfm-basic.md": { "features": ["code", "table", "task-list", "footnote"], "warnings": 0 },
+    "cjk-mixed.md": { "features": ["table"], "warnings": 0 },
+    "math.md": { "features": ["katex"], "warnings": 0 },
+    "diagrams.md": { "features": ["mermaid", "echarts"], "warnings": 0 },
+    "echarts-invalid.md": { "features": ["echarts"], "warnings": 1 },
+    "tables-edge.md": { "features": ["table"], "warnings": 0 },
+    "code-languages.md": { "features": ["code"], "warnings": 0 },
+    "frontmatter-plain.md": {
+      "features": [],
+      "absent": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+      "warnings": 0
+    },
+    "frontmatter-official.md": {
+      "features": [],
+      "absent": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+      "warnings": 0
+    },
+    "security-xss.md": {
+      "features": [],
+      "absent": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+      "warnings": 0
+    },
+    "images-paths.md": {
+      "features": [],
+      "absent": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+      "warnings": 0
+    },
+    "empty.md": {
+      "features": [],
+      "absent": ["code", "table", "task-list", "footnote", "katex", "mermaid", "echarts"],
+      "warnings": 0
+    },
+    "frontmatter-invalid.md": { "error": "MarkdownDocumentParseError" }
+  }
+}

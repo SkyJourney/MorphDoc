@@ -1,0 +1,241 @@
+name: Release
+
+# 三种触发方式共用同一条构建与归集链路，只有 publish 任务按触发方式分叉：
+#   - 推送 v*.*.* 标签：构建、归集并真实发布 GitHub Release；
+#   - 修改发布相关文件的 PR：完整演练构建与归集，不发布；
+#   - 手动触发：同样只演练，不发布。
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/actions/**'
+      - 'scripts/stage-release.mjs'
+      - 'apps/desktop/electron-builder.config.cjs'
+      - 'apps/desktop/package.json'
+      - 'apps/desktop/scripts/**'
+      - 'apps/desktop/build/**'
+      - 'deploy/**'
+  workflow_dispatch:
+
+# 标签发布永不取消；PR 演练的旧运行可以被新运行取代。
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      publish: ${{ steps.meta.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version and publish mode
+        id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          desktopVersion="$(node -p "require('./apps/desktop/package.json').version")"
+          # 版本号会写入 GITHUB_OUTPUT 并拼进产物路径，先限定为语义版本格式。
+          semver='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
+          if ! [[ "$version" =~ $semver ]]; then
+            echo "::error::package.json 版本不是合法语义版本"
+            exit 1
+          fi
+          # 桌面产物文件名取自 apps/desktop，归集脚本取自根目录，二者必须一致。
+          if [ "$version" != "$desktopVersion" ]; then
+            echo "::error::根 package.json 版本 ${version} 与 apps/desktop 版本 ${desktopVersion} 不一致"
+            exit 1
+          fi
+          publish=false
+          if [ "$EVENT_NAME" = "push" ] && [ "$REF_TYPE" = "tag" ]; then
+            publish=true
+            if [ "$REF_NAME" != "v${version}" ]; then
+              echo "::error::标签 ${REF_NAME} 与 package.json 版本 v${version} 不一致"
+              exit 1
+            fi
+            if [ ! -s "docs/releases/v${version}.md" ]; then
+              echo "::error::缺少发行说明 docs/releases/v${version}.md"
+              exit 1
+            fi
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+          echo "发布版本：${version}；真实发布：${publish}"
+
+  build-windows:
+    name: Build Windows Desktop
+    needs: prepare
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build installer and zip
+        run: pnpm run desktop:make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+          path: |
+            apps/desktop/out/v${{ needs.prepare.outputs.version }}/MorphDoc-${{ needs.prepare.outputs.version }}-x86_64-Setup.exe
+            apps/desktop/out/v${{ needs.prepare.outputs.version }}/MorphDoc-${{ needs.prepare.outputs.version }}-x86_64.zip
+
+  build-macos-arm64:
+    name: Build macOS Desktop (arm64)
+    needs: prepare
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build dmg
+        run: pnpm run desktop:make:mac:arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-macos-arm64
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+          path: apps/desktop/out/v${{ needs.prepare.outputs.version }}/MorphDoc-${{ needs.prepare.outputs.version }}-arm64.dmg
+
+  # Pandoc 运行时准备脚本会在构建机上实际执行目标架构的二进制做冒烟，
+  # 因此 x64 必须在 Intel runner 上构建，而不是在 arm64 上交叉构建。
+  build-macos-x64:
+    name: Build macOS Desktop (x64)
+    needs: prepare
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build dmg
+        run: pnpm run desktop:make:mac:x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-macos-x64
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+          path: apps/desktop/out/v${{ needs.prepare.outputs.version }}/MorphDoc-${{ needs.prepare.outputs.version }}-x64.dmg
+
+  stage:
+    name: Stage Release Assets
+    needs: [prepare, build-windows, build-macos-arm64, build-macos-x64]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      PUBLISH: ${{ needs.prepare.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: apps/desktop/out/v${{ needs.prepare.outputs.version }}
+          merge-multiple: true
+
+      # 归集脚本对 dmg 是"存在才收录"，这里显式要求四个桌面产物齐全，
+      # 避免某个平台产物丢失时发布出缺少安装包的版本。
+      - name: Verify all desktop artifacts are present
+        run: |
+          set -euo pipefail
+          dir="apps/desktop/out/v${VERSION}"
+          ls -l "$dir"
+          for name in \
+            "MorphDoc-${VERSION}-x86_64-Setup.exe" \
+            "MorphDoc-${VERSION}-x86_64.zip" \
+            "MorphDoc-${VERSION}-arm64.dmg" \
+            "MorphDoc-${VERSION}-x64.dmg"; do
+            test -s "${dir}/${name}" || { echo "::error::缺少桌面产物 ${name}"; exit 1; }
+          done
+
+      # Dockerfile 会复制 output/font-packs/root，镜像构建前必须先生成字体包，
+      # 缺少时构建会直接失败（见 deploy/README.md）。
+      - name: Build font packs
+        run: pnpm run build:font-pack
+
+      # 与官方 Compose 构建路径一致，并强制刷新基础镜像、禁用层缓存。
+      - name: Build Docker image
+        env:
+          MORPHDOC_IMAGE: morphdoc:v${{ needs.prepare.outputs.version }}
+        run: docker compose -f deploy/compose.yaml build --pull --no-cache
+
+      - name: Resolve release notes
+        id: notes
+        run: |
+          set -euo pipefail
+          if [ "$PUBLISH" = "true" ]; then
+            path="docs/releases/v${VERSION}.md"
+          else
+            path="${RUNNER_TEMP}/dry-run-notes.md"
+            printf '# v%s 发布演练\n\n本文件由发布演练自动生成，不会被发布。\n' "$VERSION" > "$path"
+          fi
+          echo "path=${path}" >> "$GITHUB_OUTPUT"
+
+      - name: Stage release directory
+        env:
+          NOTES_PATH: ${{ steps.notes.outputs.path }}
+        run: node scripts/stage-release.mjs --version "$VERSION" --release-notes "$NOTES_PATH"
+
+      - name: Show staged files
+        run: |
+          ls -l "release/v${VERSION}"
+          cat "release/v${VERSION}/SHA256SUMS.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-v${{ needs.prepare.outputs.version }}
+          path: release/v${{ needs.prepare.outputs.version }}
+          if-no-files-found: error
+          retention-days: ${{ needs.prepare.outputs.publish == 'true' && 14 || 3 }}
+          compression-level: 0
+
+  publish:
+    name: Publish GitHub Release
+    needs: [prepare, stage]
+    # 双重保护：既要求 prepare 判定为发布，又要求事件确为标签推送。
+    if: needs.prepare.outputs.publish == 'true' && github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Download staged release
+        uses: actions/download-artifact@v4
+        with:
+          name: release-v${{ needs.prepare.outputs.version }}
+          path: release
+
+      # 使用 runner 预装的 gh，而不是第三方 action，减少对持有写权限任务的信任面。
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "墨呈 MorphDoc ${TAG}" \
+            --notes-file release/RELEASE-NOTES.md \
+            release/*

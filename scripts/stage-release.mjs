@@ -154,6 +154,42 @@ async function assertReadableFile(path) {
   }
 }
 
+/**
+ * 汇总桌面端发布产物文件名。
+ *
+ * Windows 安装器与免安装 ZIP 为必需项，由调用方随后校验；
+ * macOS 两种架构的 dmg 为可选项，仅在目录中存在时收录，
+ * 以便同一脚本既能归集纯 Windows 发布，也能归集三端发布。
+ * 已存在但为空文件或非普通文件的 dmg 视为损坏，直接抛出异常，不会被静默跳过。
+ *
+ * @param {string} directory 桌面端构建输出目录
+ * @param {string} version 已规范化的发布版本
+ * @returns {Promise<string[]>} 按固定顺序排列的产物文件名
+ */
+export async function collectDesktopNames(directory, version) {
+  const required = [
+    `MorphDoc-${version}-x86_64-Setup.exe`,
+    `MorphDoc-${version}-x86_64.zip`
+  ];
+  const optional = [
+    `MorphDoc-${version}-arm64.dmg`,
+    `MorphDoc-${version}-x64.dmg`
+  ];
+  const present = [];
+  for (const name of optional) {
+    try {
+      await assertReadableFile(join(directory, name));
+      present.push(name);
+    } catch (error) {
+      // 仅"文件不存在"视为未提供该可选产物，其余错误必须暴露
+      if (error?.code !== "ENOENT") {
+        throw error;
+      }
+    }
+  }
+  return [...required, ...present];
+}
+
 export async function stageRelease(options = {}) {
   const rootManifest = JSON.parse(
     await readFile(join(repositoryRoot, "package.json"), "utf8")
@@ -182,16 +218,11 @@ export async function stageRelease(options = {}) {
     "out",
     `v${version}`
   );
-  const desktopNames = [
-    `MorphDoc-${version}-x86_64-Setup.exe`,
-    `MorphDoc-${version}-x86_64.zip`
-  ];
-  const releaseNotesSource = join(
-    repositoryRoot,
-    "docs",
-    "releases",
-    `v${version}.md`
-  );
+  const desktopNames = await collectDesktopNames(desktopDirectory, version);
+  // 默认读取仓库内的版本发行说明；CI 演练等场景可显式指定其他文件
+  const releaseNotesSource = options.releaseNotes
+    ? resolve(options.releaseNotes)
+    : join(repositoryRoot, "docs", "releases", `v${version}.md`);
   for (const name of desktopNames) {
     await assertReadableFile(join(desktopDirectory, name));
   }
@@ -269,7 +300,8 @@ async function main() {
   const values = parseArguments(process.argv.slice(2));
   const result = await stageRelease({
     version: values.get("version"),
-    image: values.get("image")
+    image: values.get("image"),
+    releaseNotes: values.get("release-notes")
   });
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }

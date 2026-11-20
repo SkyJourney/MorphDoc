@@ -1,12 +1,37 @@
-# 墨呈
+<div align="center">
+  <img src="logos/logo-transparent-2048.png" alt="MorphDoc Logo" width="200"/>
 
-> 一稿多式，即写即呈
+  # 墨呈 · MorphDoc
 
-面向结构化 Markdown 的主题化文档创作与发布工具，同时提供 Web 与
-Windows 桌面端。预览与 PDF 复用同一份安全 HTML、`#write` DOM、主题
-CSS 和分页运行时，DOCX 使用同源语义文档、主题令牌和可编辑 OOXML。
+  **一稿多式，即写即呈**
 
-当前版本：`v0.6.0`。
+  面向结构化 Markdown 的主题化文档创作与发布工具
+
+  [![CI](https://github.com/SkyJourney/MorphDoc/actions/workflows/ci.yml/badge.svg)](https://github.com/SkyJourney/MorphDoc/actions/workflows/ci.yml)
+  [![Version](https://img.shields.io/badge/version-v0.6.4-blue.svg)](https://github.com/SkyJourney/MorphDoc/releases)
+  [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+  [![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](#web-与桌面端)
+  [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](#本地开发)
+
+  [快速开始](#本地开发) · [功能特性](#核心特性) · [部署指南](#docker-compose-部署) · [开发文档](docs/PROGRESS.md)
+
+</div>
+
+---
+
+## 核心特性
+
+- 🎨 **主题化设计** — 14 套内置主题，支持政企红头、正式文档、标书等专业排版
+- 📄 **多格式导出** — 支持 PDF 和可编辑 DOCX，预览与导出使用同一渲染引擎
+- 🖼️ **丰富媒体** — 内置 Mermaid 图表、ECharts 数据可视化、公式和代码高亮
+- 🔧 **多端部署** — 提供 Web/Docker 容器，以及 Windows 与 macOS 桌面客户端
+- 🔒 **安全可控** — 内网部署，不保存文档历史，严格资源隔离
+
+预览与 PDF 复用同一份安全 HTML、`#write` DOM、主题 CSS 和分页运行时，DOCX 使用同源语义文档、主题令牌和可编辑 OOXML。
+
+当前版本：`v0.6.4`。
+
+---
 
 ## v0.6.0 核心更新
 
@@ -115,7 +140,7 @@ logos/                  应用图标源文件
 
 要求 Node.js 22 或更高版本。
 
-```powershell
+```text
 pnpm install
 pnpm run dev
 ```
@@ -128,13 +153,13 @@ pnpm run dev
 
 桌面端开发：
 
-```powershell
+```text
 pnpm run desktop:dev
 ```
 
 桌面端目录包和 Windows 安装包：
 
-```powershell
+```text
 pnpm run desktop:package
 pnpm --filter @morphdoc/desktop run make
 ```
@@ -193,6 +218,9 @@ pnpm run typecheck
 pnpm run build
 git diff --check
 ```
+
+以上检查可通过 `pnpm run ci:local` 一次执行，与 CI 保持一致。分支协作、
+持续集成、发布流程与分支保护详见[开发工作流文档](docs/WORKFLOW.md)。
 
 涉及分页或 PDF 的改动还应使用包含中文、长表格、代码、公式、图片、
 Mermaid、ECharts 和分页边界的示例完成 Web、Compose 与 Desktop 端到端

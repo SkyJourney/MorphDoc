@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "packages": {
+    "markdown-echarts": {
+      "lines": 81,
+      "statements": 81,
+      "functions": 88,
+      "branches": 66
+    },
+    "core": {
+      "lines": 93,
+      "statements": 93,
+      "functions": 76,
+      "branches": 80
+    },
+    "semantic-document": {
+      "lines": 97,
+      "statements": 97,
+      "functions": 99,
+      "branches": 82
+    },
+    "docx-theme-engine": {
+      "lines": 79,
+      "statements": 79,
+      "functions": 85,
+      "branches": 70
+    },
+    "document-visual-diff": {
+      "lines": 91,
+      "statements": 91,
+      "functions": 91,
+      "branches": 80
+    },
+    "font-pack-registry": {
+      "lines": 85,
+      "statements": 85,
+      "functions": 99,
+      "branches": 72
+    },
+    "docx-engine": {
+      "lines": 87,
+      "statements": 87,
+      "functions": 90,
+      "branches": 73
+    },
+    "font-pack-builder": {
+      "lines": 63,
+      "statements": 63,
+      "functions": 75,
+      "branches": 53
+    },
+    "renderer": {
+      "lines": 93,
+      "statements": 93,
+      "functions": 94,
+      "branches": 83
+    },
+    "preview-engine": {
+      "lines": 64,
+      "statements": 64,
+      "functions": 76,
+      "branches": 57
+    },
+    "application": {
+      "lines": 72,
+      "statements": 72,
+      "functions": 83,
+      "branches": 59
+    },
+    "web": {
+      "lines": 23,
+      "statements": 23,
+      "functions": 20,
+      "branches": 27
+    },
+    "server": {
+      "lines": 74,
+      "statements": 74,
+      "functions": 69,
+      "branches": 60
+    },
+    "desktop": {
+      "lines": 24,
+      "statements": 24,
+      "functions": 24,
+      "branches": 31
+    }
+  }
+}

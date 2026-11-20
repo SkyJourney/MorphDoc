@@ -1,0 +1,69 @@
+name: E2E
+
+# 在真实浏览器中加载 Markdown 夹具，验证预览渲染功能，并在 Linux 上做视觉回归。
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: 重新生成视觉基线（结果以产物下载，由人工审阅后提交）
+        type: boolean
+        default: false
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: E2E (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          playwright: 'true'
+
+      # 端到端测试启动真实应用栈，需要已构建的前端运行时与服务端
+      - name: Build web runtime and server
+        run: pnpm run build:web-runtime && pnpm --filter @morphdoc/server run build
+
+      # 缺少基线时 Playwright 的默认行为是写入实际图片并让该用例失败，不会悄悄通过；
+      # 只有手动触发并勾选 update_snapshots 时才会覆盖已有基线。
+      - name: Run E2E
+        env:
+          UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots }}
+        run: |
+          set -euo pipefail
+          if [ "${UPDATE_SNAPSHOTS:-false}" = "true" ]; then
+            pnpm run test:e2e --update-snapshots
+          else
+            pnpm run test:e2e
+          fi
+
+      # 视觉基线始终上传，便于在更新基线后直接下载并提交
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots
+          path: e2e/__screenshots__
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # 失败时的差异图、trace 与 HTML 报告
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 7
