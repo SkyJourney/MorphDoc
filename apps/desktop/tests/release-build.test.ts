@@ -159,8 +159,10 @@ describe("桌面发行构建链", () => {
       executableName: "MorphDoc",
       artifactPrefix: "MorphDoc"
     });
+    // 桌面端版本必须与根 package.json 一致；版本字面量不写死在测试里
+    const rootVersion = readManifest<{ version: string }>(`${projectRoot}/package.json`).version;
     expect(desktopManifest).toMatchObject({
-      version: "0.6.4",
+      version: rootVersion,
       productName: "MorphDoc"
     });
     expect(builderConfig).toContain("appId: brand.appId");

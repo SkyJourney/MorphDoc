@@ -171,8 +171,10 @@ pnpm run test:e2e
 
 ### 5.1 发布前准备
 
-1. 同步更新根 `package.json` 与 `apps/desktop/package.json` 的版本号，两者必须
-   一致；桌面产物文件名取自后者，归集脚本取自前者，工作流会校验。
+1. 运行 `pnpm run version:set <版本>`，同时写入根 `package.json` 与
+   `apps/desktop/package.json`。版本号只在这两个文件中手写，其余位置（运行时默认值、
+   测试断言、文档示例）都读取它们或使用占位符，`pnpm test` 中的 `version:check` 会拦截
+   写死的当前版本号。`version:set` 只改版本字段，不改其他内容。
 2. 编写 `docs/releases/v<version>.md`，它将作为 GitHub Release 正文。
 3. 更新 `CHANGELOG.md` 与 `docs/PROGRESS.md`。
 4. 通过 Pull Request 合并。合并提交即发布提交，信息使用 `release:` 前缀，

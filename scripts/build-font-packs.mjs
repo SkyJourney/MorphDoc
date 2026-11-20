@@ -11,7 +11,14 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const bundlePath = join(repositoryRoot, "font-packs", "bundle.json");
 const bundle = JSON.parse(await readFile(bundlePath, "utf8"));
 const outputRoot = join(repositoryRoot, "output", "font-packs", "root");
-const appVersion = process.env.npm_package_version || "0.6.4";
+// 版本号只在 package.json 中维护：直接读取，不依赖 npm_package_version（仅在经由 pnpm 运行
+// 时才存在），也不保留写死的回退值（每次发版都会悄悄过期）
+const appVersion = JSON.parse(
+  await readFile(join(repositoryRoot, "package.json"), "utf8")
+).version;
+if (typeof appVersion !== "string" || appVersion === "") {
+  throw new Error("根 package.json 缺少有效的 version");
+}
 
 if (
   bundle.schemaVersion !== 1 ||

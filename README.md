@@ -8,7 +8,7 @@
   面向结构化 Markdown 的主题化文档创作与发布工具
 
   [![CI](https://github.com/SkyJourney/MorphDoc/actions/workflows/ci.yml/badge.svg)](https://github.com/SkyJourney/MorphDoc/actions/workflows/ci.yml)
-  [![Version](https://img.shields.io/badge/version-v0.6.4-blue.svg)](https://github.com/SkyJourney/MorphDoc/releases)
+  [![Release](https://img.shields.io/github/v/release/SkyJourney/MorphDoc?label=release)](https://github.com/SkyJourney/MorphDoc/releases)
   [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
   [![Platform](https://img.shields.io/badge/platform-Web%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](#web-与桌面端)
   [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](#本地开发)
@@ -29,7 +29,7 @@
 
 预览与 PDF 复用同一份安全 HTML、`#write` DOM、主题 CSS 和分页运行时，DOCX 使用同源语义文档、主题令牌和可编辑 OOXML。
 
-当前版本：`v0.6.4`。
+当前版本以上方 Release 徽章为准（由 GitHub Release 决定）；仓库内的版本号只在根 `package.json` 中维护。
 
 ---
 

@@ -38,23 +38,23 @@ docker compose -f deploy\compose.yaml down
 可以直接指定版本化镜像名称构建：
 
 ```powershell
-$env:MORPHDOC_IMAGE = 'morphdoc:v0.6.4'
+$env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
 docker compose -f deploy\compose.yaml build
 ```
 
-该命令只生成本地镜像，不会自动推送到镜像仓库。
+其中 `<版本>` 为根 `package.json` 的 `version`。该命令只生成本地镜像，不会自动推送到镜像仓库。
 
 默认构建会安装项目锁定版本的 Playwright Chromium 及系统依赖。如果本机
 已经保留同版本系列的已验证镜像，可在内网或软件源较慢时复用其运行层：
 
 ```powershell
-$env:MORPHDOC_IMAGE = 'morphdoc:v0.6.4'
-$env:MORPHDOC_RUNTIME_BASE_IMAGE = 'morphdoc:v0.6.0'
+$env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
+$env:MORPHDOC_RUNTIME_BASE_IMAGE = 'morphdoc:v<较早的已验证版本>'
 $env:MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME = '1'
 docker compose -f deploy\compose.yaml build
 ```
 
-复用模式会校验基础镜像中存在 Chromium，再覆盖 v0.6.4 应用代码和生产
+复用模式会校验基础镜像中存在 Chromium，再覆盖当前版本的应用代码和生产
 依赖。正式跨机器构建仍建议使用默认完整路径。
 
 ## 主题挂载
@@ -76,7 +76,7 @@ docker compose -f deploy\compose.yaml up -d
 
 ## 内置字体包
 
-v0.6.4 的发行镜像固定将受校验字体包内置到
+发行镜像固定将受校验字体包内置到
 `/app/.local/font-packs`。Compose 不挂载宿主机字体目录，因此部署端
 无需额外复制字体，Preview、PDF 和 DOCX 可以离线使用同一套原生资产。
 
@@ -104,7 +104,7 @@ docker compose -f deploy\compose.yaml up -d
 发布前执行真实内置字体门禁：
 
 ```powershell
-$env:MORPHDOC_IMAGE = 'morphdoc:v0.6.4'
+$env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
 pnpm run verify:docker-font-pack
 ```
 
@@ -122,7 +122,7 @@ pnpm run verify:docker-font-pack
 | `MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME` | `0` | 是否复用基础镜像中的 Chromium |
 | `MORPHDOC_PORT` | `8080` | 宿主机监听端口 |
 | `MORPHDOC_THEME_DIR` | `../.local/themes` | 宿主机主题目录 |
-| `MORPHDOC_APP_VERSION` | `0.6.4` | 字体包兼容性判断使用的应用版本 |
+| `MORPHDOC_APP_VERSION` | 留空 | 显式覆盖应用版本（字体包兼容性判断使用）；留空时使用镜像内 `package.json` 的版本 |
 | `PDF_CONCURRENCY` | `1` | 同时执行的 PDF 任务数 |
 | `PDF_MAX_QUEUE` | `4` | 等待队列上限 |
 | `PDF_TIMEOUT_MS` | `120000` | 单次 PDF 生成超时 |
