@@ -272,6 +272,43 @@ test("stripFoldedDetails 去掉折叠的提交正文，保留其余内容", () =
   assert.equal(stripFoldedDetails(text), "概述\n\n\n\n结尾");
 });
 
+test("stripFoldedDetails 不会因提交正文中的裸 <details> 误删人工段落", () => {
+  // 回归：提交正文里出现裸的 <details> 字样（没有紧随的 <summary>，也没有自己的 </details>）。
+  // 旧正则会从这个裸标签一直匹配到后面真正的折叠块的 </details>，把中间的人工段落整段删掉。
+  const text = [
+    "## 概述",
+    "",
+    "本版本的主要目标是 X。",
+    "",
+    "本版本修复了一处 <details> 字样的显示问题。",
+    "",
+    "## 验证结果",
+    "",
+    "已在 CI 通过。",
+    "",
+    "<details><summary>#9 的完整说明</summary>",
+    "",
+    "历史正文",
+    "",
+    "</details>",
+    ""
+  ].join("\n");
+  const stripped = stripFoldedDetails(text);
+
+  assert.match(stripped, /本版本的主要目标是 X。/u, "概述必须保留");
+  assert.match(stripped, /## 验证结果/u, "中间的标题必须保留");
+  assert.match(stripped, /已在 CI 通过。/u, "中间的人工段落必须保留");
+  assert.doesNotMatch(stripped, /#9 的完整说明/u, "真正的折叠块应被去掉");
+});
+
+
+test("stripFoldedDetails 不会吞掉裸 <details> 之后的人工段落（修复前的失败形态）", () => {
+  // 只有裸 <details>、没有任何真正的折叠块时，人工段落必须完整保留
+  const text = "## 概述\n\n正文提到 <details> 字样。\n\n## 验证结果\n\n已通过。\n";
+  assert.equal(stripFoldedDetails(text), text);
+});
+
+
 test("发布前校验：提交正文中的占位标记不阻止发布，人工部分的占位仍然阻止", () => {
   // 回归：PR #6 的提交正文提到了占位标记，被原样折叠进发行说明后导致发布永远被拦截
   const directory = sampleRepository();
