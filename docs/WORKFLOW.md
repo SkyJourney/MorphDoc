@@ -65,7 +65,7 @@ pnpm run ci:local
   永远通过，因此 PR 以 `origin/<目标分支>` 的共同祖先为基线，推送以
   `github.event.before` 为基线。
 - 所有任务共用 [`.github/actions/setup`](../.github/actions/setup/action.yml)：
-  按 `packageManager` 安装 pnpm，安装 Node.js 22，执行
+  按 `packageManager` 安装 pnpm，安装 Node.js 26，执行
   `pnpm install --frozen-lockfile`；测试任务额外安装 Playwright Chromium。
 - `Actionlint` 下载官方发行包并校验固定的 sha256（与 Dockerfile 固定 Pandoc 同一做法），
   不使用第三方 action。升级版本时同时更新 `ci.yml` 里的版本号与 sha256。它关闭了

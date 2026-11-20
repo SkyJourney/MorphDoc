@@ -28,7 +28,7 @@ jobs:
       version: ${{ steps.meta.outputs.version }}
       publish: ${{ steps.meta.outputs.publish }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Resolve version and publish mode
         id: meta
@@ -77,11 +77,11 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Build installer and zip
         run: pnpm run desktop:make
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: desktop-windows
           if-no-files-found: error
@@ -97,11 +97,11 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Build dmg
         run: pnpm run desktop:make:mac:arm64
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: desktop-macos-arm64
           if-no-files-found: error
@@ -117,11 +117,11 @@ jobs:
     runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Build dmg
         run: pnpm run desktop:make:mac:x64
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: desktop-macos-x64
           if-no-files-found: error
@@ -138,11 +138,11 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
       PUBLISH: ${{ needs.prepare.outputs.publish }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
 
       - name: Download desktop artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: desktop-*
           path: apps/desktop/out/v${{ needs.prepare.outputs.version }}
@@ -196,7 +196,7 @@ jobs:
           ls -l "release/v${VERSION}"
           cat "release/v${VERSION}/SHA256SUMS.txt"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-v${{ needs.prepare.outputs.version }}
           path: release/v${{ needs.prepare.outputs.version }}
@@ -215,7 +215,7 @@ jobs:
       contents: write
     steps:
       - name: Download staged release
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-v${{ needs.prepare.outputs.version }}
           path: release
