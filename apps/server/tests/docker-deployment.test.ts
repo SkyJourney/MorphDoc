@@ -200,4 +200,33 @@ describe("发布工作流契约", () => {
       "MORPHDOC_IMAGE: morphdoc:v${{ needs.prepare.outputs.version }}"
     );
   });
+
+  it("Prepare 用同一份门禁校验标签发布，演练只给警告，不再手写平行规则", () => {
+    // 门禁只有 scripts/version.mjs 一份实现：标签发布失败即中止，演练只给出警告。
+    // 手写的标签比较与说明文件检查已移除，避免两处规则逐渐漂移
+    const workflow = readProjectFile(".github/workflows/release.yml");
+    const prepare = workflow.slice(
+      workflow.indexOf("  prepare:"),
+      workflow.indexOf("  build-windows:")
+    );
+
+    expect(prepare).toContain(
+      'if ! node scripts/version.mjs check --tag "$REF_NAME" --release; then'
+    );
+    expect(prepare).toContain("if ! node scripts/version.mjs check --release; then");
+    expect(prepare).toContain("::warning::");
+    expect(prepare).not.toContain('if [ "$REF_NAME" != "v${version}" ]');
+    expect(prepare).not.toContain('if [ ! -s "docs/releases/v${version}.md" ]');
+  });
+
+  it("Prepare 用 .nvmrc 指定的 Node 运行门禁，而不是依赖 runner 预装版本", () => {
+    const workflow = readProjectFile(".github/workflows/release.yml");
+    const prepare = workflow.slice(
+      workflow.indexOf("  prepare:"),
+      workflow.indexOf("  build-windows:")
+    );
+
+    expect(prepare).toContain("uses: actions/setup-node@v7");
+    expect(prepare).toContain("node-version-file: '.nvmrc'");
+  });
 });

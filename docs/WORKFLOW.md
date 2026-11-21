@@ -196,11 +196,22 @@ git tag -a v<version> -F <说明文件>
 git push origin v<version>
 ```
 
+推送标签后，Release 工作流的 Prepare 任务先运行发布门禁，等同于：
+
+```text
+node scripts/version.mjs check --tag <标签> --release
+```
+
+门禁要求：标签等于 `v<version>`；`docs/releases/v<version>.md` 存在且不含【待补充】；
+`CHANGELOG.md` 含对应版本的章节。任一条件不满足，Prepare 失败，Build、Stage 与 Publish
+都不会开始，也不会产生 Release。门禁只有 `scripts/version.mjs` 一份实现，本地执行的结果与
+CI 一致。
+
 ### 5.3 工作流做了什么
 
 ```mermaid
 flowchart TD
-    A["Prepare: 校验版本与发行说明"] --> B["Windows 构建"]
+    A["Prepare: 校验版本并运行发布门禁"] --> B["Windows 构建"]
     A --> C["macOS arm64 构建"]
     A --> D["macOS x64 构建"]
     B --> E["Stage: 构建、冒烟验收 Docker 镜像并归集"]
@@ -211,8 +222,8 @@ flowchart TD
     F -->|"否"| H["仅上传演练产物"]
 ```
 
-- **Prepare**：校验两处版本一致且为合法语义版本；标签发布时还校验标签等于
-  `v<version>`、`docs/releases/v<version>.md` 存在。
+- **Prepare**：校验两处版本一致且为合法语义版本；使用 `.nvmrc` 指定的 Node 运行发布门禁。
+  标签发布时门禁失败即中止；演练时门禁只给出警告（见 5.4）。
 - **构建**：Windows 执行 `desktop:make`，macOS 分别执行
   `desktop:make:mac:arm64` 与 `desktop:make:mac:x64`。x64 在 Intel runner 上构建，
   因为 Pandoc 运行时准备脚本会在构建机上实际运行目标架构的二进制做冒烟。
@@ -247,8 +258,8 @@ gh workflow run release.yml --ref <分支名>
   等）。这类改动合并前，应当在 PR 分支上手动运行一次演练；CI 的 `Actionlint` 只能守住
   工作流的语法与表达式，发现不了构建与归集阶段的问题。
 - 同一引用上的新演练会取消仍在进行的旧演练；标签发布永不取消。
-- 演练在缺少 `docs/releases/v<version>.md` 时只给出警告，真实发布则会失败，所以要留意
-  演练日志里的警告。
+- 演练中门禁未通过时，Prepare 只输出 `::warning::`，演练本身仍然成功。警告内容与真实发布
+  会拦住的问题相同，发版前请确认演练日志中没有该警告。
 
 ### 5.5 产物
 
@@ -267,7 +278,8 @@ gh workflow run release.yml --ref <分支名>
 ### 5.6 失败处理
 
 - 构建失败：修复后重新运行失败任务，或重新手动演练；演练不产生任何发布。
-- 标签已推送但发布失败（例如缺少发行说明）：标签没有对应的 Release。先用
+- 标签已推送但门禁未通过（例如缺少发行说明、仍有【待补充】、CHANGELOG 缺少对应章节）：
+  Prepare 已失败，因此不会有 Release。先用
   `git push origin :refs/tags/<tag>` 与 `git tag -d <tag>` 删除标签，修复后重新打标签。
 - Publish 失败且 Release 已部分创建：先用 `gh release delete <tag>` 删除，
   再重新运行 Publish 任务。标签本身不需要重建。

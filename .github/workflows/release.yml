@@ -30,6 +30,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 发布门禁与其余任务使用同一个 Node 版本（.nvmrc），不依赖 runner 预装的版本
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
       - name: Resolve version and publish mode
         id: meta
         env:
@@ -54,18 +59,18 @@ jobs:
           publish=false
           if [ "$EVENT_NAME" = "push" ] && [ "$REF_TYPE" = "tag" ]; then
             publish=true
-            if [ "$REF_NAME" != "v${version}" ]; then
-              echo "::error::标签 ${REF_NAME} 与 package.json 版本 v${version} 不一致"
+            # 标签发布先过发布门禁：标签等于 v<版本>，发行说明齐全且已补全，CHANGELOG 有对应章节。
+            # 门禁失败即中止，Build 与 Publish 都不会开始。门禁只有 scripts/version.mjs 一份实现。
+            if ! node scripts/version.mjs check --tag "$REF_NAME" --release; then
+              echo "::error::发布门禁未通过：标签、版本、发行说明或 CHANGELOG 不满足发布条件，已中止发布"
               exit 1
             fi
-            if [ ! -s "docs/releases/v${version}.md" ]; then
-              echo "::error::缺少发行说明 docs/releases/v${version}.md"
-              exit 1
+          else
+            # 演练不因门禁失败而中止，只给出警告：真实发布时同样的检查会拦住发布。
+            # 在演练阶段暴露问题，而不是等到标签已推送、发布却失败之后才发现。
+            if ! node scripts/version.mjs check --release; then
+              echo "::warning::发行说明门禁未通过：真实发布（推送标签）会因此中止，请查看上方输出"
             fi
-          elif [ ! -s "docs/releases/v${version}.md" ]; then
-            # 演练不会因此失败，但真实发布会：在演练阶段就把问题暴露出来，
-            # 而不是等到打标签之后才发现标签已推送、发布却失败
-            echo "::warning::缺少发行说明 docs/releases/v${version}.md，真实发布（推送标签）会因此失败"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "publish=${publish}" >> "$GITHUB_OUTPUT"
