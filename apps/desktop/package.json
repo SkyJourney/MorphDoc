@@ -1,6 +1,6 @@
 {
   "name": "@morphdoc/desktop",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "private": true,
   "productName": "MorphDoc",
   "description": "墨呈桌面端：面向结构化 Markdown 的主题化文档创作与发布工具",
