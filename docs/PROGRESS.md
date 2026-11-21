@@ -18,7 +18,7 @@
   - 文档同步：README、`deploy/README.md`、`docs/WORKFLOW.md`、`docs/PANDOC_DISTRIBUTION.md`、本文件。
   - 合并前的本地验证：amd64 镜像通过 `verify:docker-font-pack` 与 `verify:docker-smoke`（PDF 95796 字节）；Node 22 镜像与启动即退出的镜像均被冒烟脚本拒绝。PR 的 CI 与发布演练结果见 PR #16 的检查记录。
 - **进行中：v0.6.6 发布**（分支 `release/v0.6.6`，尚未合并，也未打标签）：
-  1. 在发布分支上手动运行演练（`gh workflow run release.yml --ref release/v0.6.6`），下载 `release-v0.6.6` 产物核对 SHA256，并用 `pnpm run verify:docker-smoke` 验证离线镜像；结果回填到 `docs/releases/v0.6.6.md`。
+  1. 演练（运行 `44855840548`）、产物核对、离线镜像加载与冒烟、离线部署包启动均已完成，结果已回填到 `docs/releases/v0.6.6.md`。
   2. 合并前运行 `node scripts/version.mjs check --release`，确认没有残留的【待补充】。合并采用 squash，标题前缀 `release:`。
   3. 打标签前再次向用户确认。标签使用 annotated tag，说明与发布提交正文一致。
   4. 发布后下载 `MorphDoc-Web-0.6.6-image.tar.gz` 再次验证，并更新本文件的“线上最新正式版”。
@@ -29,7 +29,7 @@
   - `manifest.json` 与 `SHA256SUMS.txt` 仍列出已删除的镜像，作为发布时的记录保留。
   - 桌面产物仍未做代码签名。
 
-## 版本与 PR 记录（#5 至 #16）
+## 版本与 PR 记录（#5 至 #17）
 
 - #5 统一版本号来源，建立 `version:check`；#6 `version:set` 生成 CHANGELOG 与发行说明骨架；#7 测试临时仓库身份改为 SkyJourney。
 - #8、#9、#10 修复发行说明生成器：占位检查忽略折叠的提交正文、末尾只保留单个换行、折叠块只做精确匹配。
@@ -37,6 +37,7 @@
 - #14 CI 与发布基线升级到 Node 26，action 升级到 node24 运行时。
 - #15 容器运行时基础镜像升级到 Node 26，并修复依赖断链与 Chromium 版本错配。
 - #16 锁定 Node.js 26.13.1，新增镜像冒烟验收并接入发布工作流。
+- #17 发布 v0.6.6（`release/v0.6.6`）：版本号、CHANGELOG、发行说明与进度文档。演练与产物验收通过，等待合并与打标签确认。
 
 ## CI/CD 流水线与测试体系
 
