@@ -185,7 +185,6 @@ pnpm run test:e2e
 4. 更新 `docs/PROGRESS.md`。
 5. 通过 Pull Request 合并。
 6. **打标签之前先演练**：Release 工作流不再由 Pull Request 触发，所以发版 PR 不会自动
-   演练。在发布提交上手动运行一次演练，见 5.4。
    演练。在发布提交（合并前的 PR 分支，或合并后的 `main`）上手动运行一次演练，见 5.4。
 
 ### 5.2 打标签并发布
@@ -204,7 +203,7 @@ flowchart TD
     A["Prepare: 校验版本与发行说明"] --> B["Windows 构建"]
     A --> C["macOS arm64 构建"]
     A --> D["macOS x64 构建"]
-    B --> E["Stage: 构建 Docker 镜像并归集"]
+    B --> E["Stage: 构建、冒烟验收 Docker 镜像并归集"]
     C --> E
     D --> E
     E --> F{"是否为标签推送"}
@@ -218,9 +217,11 @@ flowchart TD
   `desktop:make:mac:arm64` 与 `desktop:make:mac:x64`。x64 在 Intel runner 上构建，
   因为 Pandoc 运行时准备脚本会在构建机上实际运行目标架构的二进制做冒烟。
 - **Stage**：下载四个桌面产物并确认齐全，用官方 Compose 路径执行
-  `docker compose build --pull --no-cache`，再由 `scripts/stage-release.mjs`
+  `docker compose build --pull --no-cache`，再对同一镜像执行
+  `pnpm run verify:docker-smoke`：以 Compose 相同的参数启动容器，检查运行时 Node 版本、
+  `/api/health`、真实 PDF 与 Chromium 预热。冒烟通过后才由 `scripts/stage-release.mjs`
   归集为 `release/v<version>/`，生成部署 ZIP、离线镜像、`manifest.json` 与
-  `SHA256SUMS.txt`。
+  `SHA256SUMS.txt`。冒烟失败则不归集、不发布。
 - **Publish**：只在标签推送时运行，单独持有 `contents: write` 权限，使用
   runner 预装的 `gh release create`，不引入第三方发布 action。
 
@@ -228,7 +229,7 @@ flowchart TD
 
 版本标签是发布的唯一触发器，每次都构建**完整的一套**产物。演练用手动触发
 （`workflow_dispatch`）：在所选分支或提交上完整执行构建与归集，但**不会**执行
-Publish，产物仅保留 3 天。
+Publish，产物仅保留 3 天。镜像冒烟验收同样会执行，因此演练也能验证冒烟步骤本身。
 
 运行演练：
 

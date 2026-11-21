@@ -1,6 +1,42 @@
 # 墨呈进度
 
-最后更新：2026-11-20
+最后更新：2026-11-21
+
+## 当前交接（2026-11-21）
+
+- **线上最新正式版**：v0.6.5（2026-11-20 发布；标签 `v0.6.5` 指向发布提交 `29e0ff3`；Release 工作流运行 44710298483 成功）。
+- **v0.6.5 的 Docker 镜像不可用**。镜像能够构建，但启动即退出：
+  - 运行层只复制了根目录的 `node_modules`，服务报 `Cannot find package 'fastify'`；
+  - 镜像内以 `npx playwright install` 安装 Chromium，拉取的是未锁定的最新版 Playwright，浏览器版本与服务所需不一致。
+  - 发布演练只验证了构建与归集，没有启动镜像，所以没有被发现。
+- **已处理**：2026-11-21 已从发布页删除 `MorphDoc-Web-0.6.5-image.tar.gz`，并在 v0.6.5 正文顶部加入勘误。`MorphDoc-Web-0.6.5-deploy.zip` 仍在发布页，其离线步骤依赖已删除的镜像，待决定是否删除。
+- **PR #16（`fix/lock-node-version`）合并后，`main` 将包含**：
+  - Node.js 锁定为 26.13.1：`.nvmrc` 为唯一来源；`deploy/Dockerfile` 三个阶段、`deploy/compose.yaml` 默认运行时镜像、CI 复合 action（`node-version-file`）与契约测试保持一致。
+  - 新增 `pnpm run verify:docker-smoke`（`deploy/smoke-image.mjs`）：以 Compose 相同的参数启动镜像，检查运行时 Node 版本、`/api/health`（`status=ok`）、`/api/pdf` 生成的 PDF 结构（嵌入字体、Type0 中文字体、ToUnicode），以及 Chromium 预热日志。
+  - 发布工作流（`release.yml` 的 Stage 任务）在构建镜像之后、归集之前执行冒烟验收，失败则不归集、不发布。
+  - 修复：冒烟脚本注释中写死了版本号，被 `version:check` 拦截，导致三平台 `Test` 失败；已改为不含版本号的描述。
+  - 文档同步：README、`deploy/README.md`、`docs/WORKFLOW.md`、`docs/PANDOC_DISTRIBUTION.md`、本文件。
+  - 合并前的本地验证：amd64 镜像通过 `verify:docker-font-pack` 与 `verify:docker-smoke`（PDF 95796 字节）；Node 22 镜像与启动即退出的镜像均被冒烟脚本拒绝。PR 的 CI 与发布演练结果见 PR #16 的检查记录。
+- **下一步**：
+  1. 合并 PR #16（squash，标题前缀 `fix:`）。
+  2. 开 v0.6.6 发布 PR：运行 `pnpm run version:set 0.6.6`，补全 `docs/releases/v0.6.6.md` 的概述、验证结果与迁移说明；迁移说明须写明 v0.6.5 镜像问题及替代做法。
+  3. 在发布 PR 分支上手动运行演练（`gh workflow run release.yml --ref <分支>`），确认冒烟步骤通过后回填验证结果，再以 `release:` 前缀合并。
+  4. 打标签前再次向用户确认。标签使用 annotated tag，说明与发布提交正文一致。
+  5. 发布后下载 `MorphDoc-Web-0.6.6-image.tar.gz`，用 `pnpm run verify:docker-smoke` 验证。
+- **待决事项**：
+  - `MorphDoc-Web-0.6.5-deploy.zip` 是否从发布页删除。
+  - v0.6.5 的 `RELEASE-NOTES.md` 资产与仓库内 `docs/releases/v0.6.5.md` 仍是修正前的文本；标签说明不可修改（改标签需要移动标签，不建议）。
+  - `manifest.json` 与 `SHA256SUMS.txt` 仍列出已删除的镜像，作为发布时的记录保留。
+  - 桌面产物仍未做代码签名。
+
+## 版本与 PR 记录（#5 至 #16）
+
+- #5 统一版本号来源，建立 `version:check`；#6 `version:set` 生成 CHANGELOG 与发行说明骨架；#7 测试临时仓库身份改为 SkyJourney。
+- #8、#9、#10 修复发行说明生成器：占位检查忽略折叠的提交正文、末尾只保留单个换行、折叠块只做精确匹配。
+- #11、#12、#13 发布 v0.6.5：发布提交使用 `release:` 前缀，标签指向 `29e0ff3`。
+- #14 CI 与发布基线升级到 Node 26，action 升级到 node24 运行时。
+- #15 容器运行时基础镜像升级到 Node 26，并修复依赖断链与 Chromium 版本错配。
+- #16 锁定 Node.js 26.13.1，新增镜像冒烟验收并接入发布工作流。
 
 ## CI/CD 流水线与测试体系
 
@@ -114,8 +150,7 @@
 
 ### 仍未验证或待办
 
-- **标签发布从未真实执行过。** 演练覆盖了构建与归集，`publish` 任务与
-  `gh release create` 只经过 `actionlint` 校验，首次真实发版时才会第一次运行。
+- **标签发布已在 v0.6.5 上真实执行**（Release 工作流运行 44710298483 成功）。但演练只覆盖了构建与归集，v0.6.5 的 Docker 镜像启动即退出，演练没有启动镜像，因此问题未被发现。
 - 视觉基线只在 Linux 上比对；容差为 100 个像素（反向验证中，1% 的比例容差会放过
   整行文字改动，已收紧）。在全新 runner 上重新生成的 7 张基线与已入库的逐字节一致，
   说明 Linux 渲染是确定性的。
@@ -126,8 +161,7 @@
 - 改动发布相关文件的 PR 不会自动演练，合并前需手动运行一次 Release 演练，见
   WORKFLOW.md 5.4。CI 的 `Actionlint` 常驻守住工作流的语法与表达式，但发现不了构建与
   归集阶段的问题。
-- README 中仍有过时内容（如 `apps/desktop/out/v0.6.0/`、`MorphDoc-0.6.0-...` 的
-  示例路径，以及“Windows Desktop”一栏），不属于本次范围。
+- README 的桌面产物示例路径已改为 `<版本>` 占位符。“v0.6.0 核心更新”一节仍是历史内容，保留未改。
 - 桌面产物仍未做代码签名。
 
 已验证：`Stability`（三平台各 2 轮，不稳定用例 0 个）与 E2E“重新生成基线”两个
@@ -180,6 +214,8 @@
   `9b2ae88335c88a0bd7e2da987728ff603236bf0f7d9d8fc0da114ad39b37726a`。
 
 ## 1. 当前概况
+
+> 本节为早期快照。当前分支、提交与进展以文首“当前交接”为准。
 
 项目目录：
 
@@ -1602,6 +1638,8 @@ ECharts 第二阶段浏览器与 PDF 验证结果：
   调用 electron-builder 复制未经本轮编译的 `apps/web/dist`。
 
 ## 6. 推荐接手顺序
+
+> 本节为 v0.6 阶段的历史接手顺序。当前下一步见文首“当前交接”。
 
 ### 阶段一：v0.6.0 分阶段开发
 
