@@ -2,8 +2,8 @@
 
 `apps/desktop` 是 Electron 桌面应用。当前已经完成 Electron 壳、受限
 preload、进程内应用服务、原生 Markdown 打开与保存、同目录图片解析、
-本地主题目录、隐藏分页窗口、Electron Chromium PDF 输出和 Windows
-安装包。
+本地主题目录、隐藏分页窗口、Electron Chromium PDF 输出，以及 Windows
+与 macOS 安装包。
 
 桌面端会记住上次窗口的位置、尺寸和最大化状态；窗口变化后延迟写入，
 异常退出后也能恢复。恢复时会按当前显示器工作区修正位置与尺寸，避免窗口
@@ -24,7 +24,7 @@ preload、进程内应用服务、原生 Markdown 打开与保存、同目录图
 
 从仓库根目录运行：
 
-```powershell
+```text
 pnpm run desktop:dev
 ```
 
@@ -35,7 +35,7 @@ Electron 自带 Chromium 生成。Web 与 Docker 继续通过 Fastify HTTP
 
 ## 构建与打包
 
-```powershell
+```text
 pnpm --filter @morphdoc/desktop run build
 pnpm run desktop:package
 pnpm --filter @morphdoc/desktop run make
@@ -52,7 +52,7 @@ Pandoc 构建缓存位于被 Git 忽略的 `apps/desktop/.runtime/`。发行目�
 不会携带官方 MSI、手册、下载缓存或用户级 Pandoc 配置。已准备运行时可用
 以下命令离线复验：
 
-```powershell
+```text
 pnpm --filter @morphdoc/desktop run verify:pandoc-runtime
 ```
 
@@ -61,6 +61,14 @@ pnpm --filter @morphdoc/desktop run verify:pandoc-runtime
 `MorphDoc-<版本>-x86_64-Setup.exe`，ZIP 作为免安装
 辅助包；当前未配置代码签名，Windows 首次运行可能显示“未知发布者”
 提示。
+
+### macOS 安装包
+
+macOS 的 `dmg` 每次只构建一个架构（arm64 或 x64），不产出 universal 包。构建脚本通过 `MORPHDOC_MAC_TARGET_ARCH` 选择对应的内置 Pandoc（`darwin-arm64` 或 `darwin-x64`）。
+
+当前未配置 Apple 证书，`identity` 显式设为空：安装包未签名，也未公证，首次打开需要在系统设置中手动放行。Intel（x64）包在 Intel runner 上构建，因为 Pandoc 运行时准备脚本会在构建机上执行目标架构的二进制做冒烟。
+
+桌面端在 macOS 上的文件关联、第二实例与链接行为尚未逐项验收。
 
 Serif、Sans、Mono 三套正式字体随 NSIS 安装包和便携 ZIP 直接进入
 `resources/font-packs`，由应用私有加载，不写入 Windows 系统字体目录。

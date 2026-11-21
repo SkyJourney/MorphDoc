@@ -26,7 +26,7 @@ flowchart LR
 
 ## 2. 本地验证
 
-环境要求 Node.js 22 或更高版本（CI 与容器固定使用 `.nvmrc` 中的版本），pnpm 由 `package.json` 的 `packageManager`
+环境最低要求 Node.js 22（见 `package.json` 的 `engines`）；推荐使用 `.nvmrc` 指定的版本，CI 与容器固定使用它。pnpm 由 `package.json` 的 `packageManager`
 字段锁定（通过 Corepack 使用）。提交前运行：
 
 ```text

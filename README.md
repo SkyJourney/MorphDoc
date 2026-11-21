@@ -33,6 +33,16 @@
 
 ---
 
+## 最近更新
+
+- **Docker 镜像**：v0.6.5 的 Docker 镜像与离线部署包无法启动，已从发布页删除。请使用 Release 页面中最新版本的镜像与部署包。
+- **Node.js**：开发与容器使用的 Node.js 版本由仓库根目录的 `.nvmrc` 指定（当前 26.13.1），CI 与容器镜像使用同一版本。
+- **发布检查**：发布前会以真实容器生成 PDF 做启动验收；标签发布由发布门禁校验版本、发行说明与变更记录。
+
+版本号与逐项变更见 [CHANGELOG.md](CHANGELOG.md) 与 GitHub Release。本页不写具体版本号，以免与 Release 徽章不一致。
+
+---
+
 ## v0.6.0 核心更新
 
 - 新增可编辑 DOCX 导出，使用固定 Pandoc、动态 Word 样式、原生分节、
@@ -79,6 +89,8 @@
 | PDF 引擎 | 固定版本 Playwright Chromium | Electron 自带 Chromium |
 | DOCX 引擎 | 固定版本 Pandoc | 内置固定版本 Pandoc |
 
+macOS 桌面版以 dmg 发布，分别提供 arm64 与 x64 两份安装包，目前未签名。上表的桌面行为以 Windows 版为准，macOS 版的交互行为尚未逐项验收。
+
 Web 端不提供本地素材目录能力。需要包含本地相对资源的文档时，请使用
 Desktop；Web 端可使用 Base64/Data URL 或受限公网图片。
 
@@ -108,7 +120,7 @@ flowchart LR
 apps/
   web/                  React 编辑、设置、快速/精确预览与浏览器文件操作
   server/               Fastify API、Playwright PDF 与容器运行入口
-  desktop/              Electron 主进程、IPC、原生文件和 Windows 打包
+  desktop/              Electron 主进程、IPC、原生文件，以及 Windows 与 macOS 打包
 packages/
   core/                 跨端文档、导出配置和主题协议
   renderer/             Markdown 到安全 #write HTML 的渲染管线
@@ -164,6 +176,13 @@ pnpm run desktop:package
 pnpm --filter @morphdoc/desktop run make
 ```
 
+macOS 安装包（dmg）分别构建 arm64 与 x64：
+
+```text
+pnpm run desktop:make:mac:arm64
+pnpm run desktop:make:mac:x64
+```
+
 桌面 `package` 和 `make` 会先完整重建内嵌 Web 及全部共享依赖，再准备并
 校验固定 Pandoc `3.9.0.2` 最小运行时，不能复用陈旧的
 `apps/web/dist`。产物位于 `apps/desktop/out/v<版本>/`。
@@ -197,18 +216,18 @@ ECharts 围栏语法、支持系列和安全边界详见
 Compose 会把 `.local/themes` 只读挂载到容器。主题导入脚本只用于
 刷新本地开发副本：
 
-```powershell
+```text
 pnpm run theme:import-typora
 ```
 
 ## Docker Compose 部署
 
-```powershell
-docker compose -f deploy\compose.yaml up --build -d
+```text
+docker compose -f deploy/compose.yaml up --build -d
 ```
 
 默认访问 http://localhost:8080。端口、镜像、主题挂载、PDF 并发和超时
-配置详见 [AIO 容器部署说明](deploy/README.md)。
+配置详见 [AIO 容器部署说明](deploy/README.md)。离线环境请使用 Release 页面中的离线部署包，步骤见该文档的“离线部署包”一节。
 
 发布前或排查镜像问题时，运行 `pnpm run verify:docker-smoke`。它会以 Compose 相同的参数启动
 `MORPHDOC_IMAGE` 指定的镜像（默认 `morphdoc:local`），检查运行时 Node 版本、健康检查与真实
@@ -217,7 +236,7 @@ PDF 生成。只构建成功并不代表镜像可用。需要 Docker 引擎已�
 
 ## 验证
 
-```powershell
+```text
 pnpm test
 pnpm run typecheck
 pnpm run build
