@@ -4,12 +4,12 @@
 
 根目录 [`CHANGELOG.md`](../CHANGELOG.md) 是版本变更摘要的单一事实来源。
 每项面向用户或部署方的重要新增、修复、行为变化和兼容性变化应先记录在
-`Unreleased`；冻结版本时将相关内容移动到带发布日期的版本章节。
+`Unreleased`。发版时运行 `pnpm run version:set <version>`，由 git 提交生成版本章节，
+并插在 `[Unreleased]` 之后；`[Unreleased]` 下的人工条目不会被自动移动，需要手动并入新章节。
 
-GitHub Release 页面正文应以 `CHANGELOG.md` 对应版本章节为基础生成，可按发布
-场景补充下载提示，但不得与变更日志中的功能、兼容性和验证结论冲突。
-`docs/releases/v<version>.md` 用于保存更详细的发布门禁、验证结论和发行说明，
-不单独维护另一份相互矛盾的版本摘要。
+GitHub Release 正文取自 `docs/releases/v<version>.md`。该文件由 `version:set` 生成骨架，
+人工补全概述、验证结果与迁移说明后随发布提交提交。它与 `CHANGELOG.md` 对应章节的功能、
+兼容性和验证结论不得相互矛盾，不单独维护第二份版本摘要。
 
 ## 唯一产物目录
 
@@ -35,6 +35,8 @@ release/v<semver>/
 release/v<version>/
 ├── MorphDoc-<version>-x86_64-Setup.exe
 ├── MorphDoc-<version>-x86_64.zip
+├── MorphDoc-<version>-arm64.dmg
+├── MorphDoc-<version>-x64.dmg
 ├── MorphDoc-Web-<version>-image.tar.gz
 ├── MorphDoc-Web-<version>-deploy.zip
 ├── manifest.json
@@ -61,22 +63,20 @@ TTF、OTF、WOFF 和 WOFF2 资产直接以普通 Git 对象入库，不使用 Gi
 
 ## 发版步骤
 
-1. 完成全量测试、类型检查、生产构建和视觉门禁。
-2. 构建字体直接内置的 Desktop 安装包和便携 ZIP。
-3. 构建并验证版本化 Docker 镜像。
-4. 将 `CHANGELOG.md` 中本版本变更从 `Unreleased` 冻结为带日期的版本章节，
-   并以该章节为基础准备 `docs/releases/v<version>.md` 与 GitHub Release 正文。
-5. 执行：
+完整的 PR、演练、标签与发布流程见 [开发工作流文档](WORKFLOW.md) 第 5 节。
+本节只列与版本和产物直接相关的规则：
 
-   ```powershell
-   pnpm run release:stage -- --version <version> --image morphdoc:v<version>
-   ```
+1. 运行 `pnpm run version:set <version>`，同步两处 `package.json`，并生成 CHANGELOG 版本章节与 `docs/releases/v<version>.md` 骨架。
+2. 补全骨架中的 `【待补充】` 标记（概述、验证结果、迁移说明），并确认 `node scripts/version.mjs check --release` 通过。
+3. 以 `release:` 前缀提交发布提交，通过 Pull Request 以 Squash 合并到 `main`。
+4. 在发布分支上手动运行一次演练。演练中的镜像冒烟验收与归集必须通过，并核对演练产物的 `SHA256SUMS.txt`。
+5. 在合并后的发布提交上创建 annotated tag `v<version>`，说明与该提交正文一致，然后推送。Prepare 发布门禁通过后，Release 工作流构建、归集并发布。
+6. 核对已发布的 Release：资产与 `SHA256SUMS.txt`、`manifest.json` 中的提交与镜像 ID，并加载离线镜像执行冒烟验收。
 
-6. 逐项核验 `SHA256SUMS.txt`，并从离线归档重新加载 Docker 镜像。
-7. 创建内容完整的 `release:` 提交。
-8. 重新生成 release 清单，确保 `gitCommit` 指向该发布提交。
-9. 创建 annotated `v<version>` 标签，标签说明与发布提交正文一致。
-10. 发布 GitHub Release，正文以 `CHANGELOG.md` 对应版本章节为基础，并附上
-    本轮正式分发文件。
+需要在本地归集核对时，可以执行下面的命令。正式产物由 Release 工作流生成，本地归集结果不发布：
+
+```text
+pnpm run release:stage -- --version <version> --image morphdoc:v<version>
+```
 
 安装器公开分发前应完成 Authenticode 签名；未签名产物只能按发布风险规则分发。

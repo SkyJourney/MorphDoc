@@ -70,7 +70,7 @@ flowchart LR
 
 - 前端：React、TypeScript、Vite。
 - 后端：Node.js、TypeScript、Fastify。
-- 桌面端：Electron、electron-builder、NSIS。
+- 桌面端：Electron、electron-builder；Windows 安装包使用 NSIS，macOS 安装包使用 dmg。
 - 应用服务：`packages/application`。
 - 共享模型：`packages/core`。
 - Markdown 渲染：`packages/renderer`。
@@ -140,7 +140,7 @@ docs/                 进度、架构和部署文档
 
 ## 7. 开发和验证
 
-要求 Node.js 22 或更高版本。
+要求 Node.js 22 或更高版本，这是 `package.json` 的 `engines` 声明的最低要求。推荐使用仓库根目录 `.nvmrc` 指定的版本（当前 26.13.1），CI 与容器镜像均以它为准；使用 nvm 时可在项目目录执行 `nvm use`。
 
 安装依赖：
 
