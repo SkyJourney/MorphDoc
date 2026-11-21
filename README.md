@@ -138,7 +138,7 @@ logos/                  应用图标源文件
 
 ## 本地开发
 
-要求 Node.js 22 或更高版本。
+要求 Node.js 22 或更高版本；推荐使用仓库根目录 `.nvmrc` 指定的版本（当前 26.13.1，与 CI 和容器镜像一致）。
 
 ```text
 pnpm install
@@ -166,8 +166,8 @@ pnpm --filter @morphdoc/desktop run make
 
 桌面 `package` 和 `make` 会先完整重建内嵌 Web 及全部共享依赖，再准备并
 校验固定 Pandoc `3.9.0.2` 最小运行时，不能复用陈旧的
-`apps/web/dist`。产物位于 `apps/desktop/out/v0.6.0/`。
-正式安装包命名为 `MorphDoc-0.6.0-x86_64-Setup.exe`，同时生成免安装 ZIP；当前发行包
+`apps/web/dist`。产物位于 `apps/desktop/out/v<版本>/`。
+正式安装包命名为 `MorphDoc-<版本>-x86_64-Setup.exe`，同时生成免安装 ZIP；当前发行包
 未配置代码签名。
 
 ## 文档与媒体
@@ -209,6 +209,11 @@ docker compose -f deploy\compose.yaml up --build -d
 
 默认访问 http://localhost:8080。端口、镜像、主题挂载、PDF 并发和超时
 配置详见 [AIO 容器部署说明](deploy/README.md)。
+
+发布前或排查镜像问题时，运行 `pnpm run verify:docker-smoke`。它会以 Compose 相同的参数启动
+`MORPHDOC_IMAGE` 指定的镜像（默认 `morphdoc:local`），检查运行时 Node 版本、健康检查与真实
+PDF 生成。只构建成功并不代表镜像可用。需要 Docker 引擎已启动；在 Apple Silicon 上验证 amd64
+镜像时，先设置 `DOCKER_DEFAULT_PLATFORM=linux/amd64`。
 
 ## 验证
 

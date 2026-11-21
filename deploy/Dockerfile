@@ -1,8 +1,11 @@
 # syntax=docker/dockerfile:1
 
-ARG RUNTIME_BASE_IMAGE=node:26-bookworm-slim
+# Node 版本以仓库根目录的 .nvmrc 为准。此处的 ARG 是同一版本的字面量副本（构建参数无法读取文件），
+# 由 apps/server 的契约测试保证与 .nvmrc、compose.yaml、CI 复合 action 一致。
+ARG NODE_BASE_IMAGE=node:26.13.1-bookworm-slim
+ARG RUNTIME_BASE_IMAGE=node:26.13.1-bookworm-slim
 
-FROM node:26-bookworm-slim AS build
+FROM ${NODE_BASE_IMAGE} AS build
 
 WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
@@ -49,7 +52,7 @@ RUN pnpm --filter @morphdoc/markdown-echarts run build \
     && pnpm --filter @morphdoc/web run build \
     && pnpm --filter @morphdoc/server run build
 
-FROM node:26-bookworm-slim AS production-dependencies
+FROM ${NODE_BASE_IMAGE} AS production-dependencies
 
 WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
@@ -89,7 +92,7 @@ RUN set -eu; mkdir -p /app-deps; \
     mkdir -p /app-deps/node_modules && cp -a /app/node_modules/. /app-deps/node_modules/; \
     test -e /app-deps/apps/server/node_modules/fastify/package.json
 
-FROM node:26-bookworm-slim AS pandoc-runtime
+FROM ${NODE_BASE_IMAGE} AS pandoc-runtime
 
 ARG PANDOC_VERSION=3.9.0.2
 ARG PANDOC_LINUX_AMD64_URL=https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-linux-amd64.tar.gz

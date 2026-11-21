@@ -113,12 +113,27 @@ pnpm run verify:docker-font-pack
 确认不存在字体运行时挂载，并检查健康状态、Pandoc capability、WOFF2
 资源和 DOCX 字体部件；所有临时容器、网络和目录会在结束时清理。
 
+## 镜像冒烟验收
+
+字体门禁只覆盖字体包与 DOCX 链路。发布前还必须真正启动镜像，并通过它生成一份 PDF：
+
+```powershell
+$env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
+pnpm run verify:docker-smoke
+```
+
+脚本以 `compose.yaml` 相同的运行参数启动容器，依次检查：运行时 Node 版本与
+`.nvmrc` 一致；`/api/health` 返回 `status=ok`；`/api/pdf` 生成的文件带有嵌入字体、
+Type0 中文字体与 ToUnicode 映射；生成 PDF 后 Chromium 预热没有失败。临时容器在
+结束时删除。在 Apple Silicon 上验证 amd64 镜像时，先设置
+`DOCKER_DEFAULT_PLATFORM=linux/amd64`。
+
 ## 运行参数
 
 | 环境变量 | 默认值 | 说明 |
 | --- | ---: | --- |
 | `MORPHDOC_IMAGE` | `morphdoc:local` | 构建和运行的镜像标签 |
-| `MORPHDOC_RUNTIME_BASE_IMAGE` | `node:26-bookworm-slim` | 可选运行时基础镜像 |
+| `MORPHDOC_RUNTIME_BASE_IMAGE` | `node:26.13.1-bookworm-slim` | 可选运行时基础镜像 |
 | `MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME` | `0` | 是否复用基础镜像中的 Chromium |
 | `MORPHDOC_PORT` | `8080` | 宿主机监听端口 |
 | `MORPHDOC_THEME_DIR` | `../.local/themes` | 宿主机主题目录 |
