@@ -9,7 +9,7 @@
   - 运行层只复制了根目录的 `node_modules`，服务报 `Cannot find package 'fastify'`；
   - 镜像内以 `npx playwright install` 安装 Chromium，拉取的是未锁定的最新版 Playwright，浏览器版本与服务所需不一致。
   - 发布演练只验证了构建与归集，没有启动镜像，所以没有被发现。
-- **已处理**：2026-11-21 已从发布页删除 `MorphDoc-Web-0.6.5-image.tar.gz`，并在 v0.6.5 正文顶部加入勘误。`MorphDoc-Web-0.6.5-deploy.zip` 仍在发布页，其离线步骤依赖已删除的镜像，待决定是否删除。
+- **已处理**：2026-11-21 已从发布页删除 `MorphDoc-Web-0.6.5-image.tar.gz`；在 v0.6.5 正文末尾加入勘误，并修正正文中的残缺句、过时的发布状态说明，以及发行产物中的镜像条目。`MorphDoc-Web-0.6.5-deploy.zip` 仍在发布页，其离线步骤依赖已删除的镜像，待决定是否删除。
 - **PR #16（`fix/lock-node-version`）合并后，`main` 将包含**：
   - Node.js 锁定为 26.13.1：`.nvmrc` 为唯一来源；`deploy/Dockerfile` 三个阶段、`deploy/compose.yaml` 默认运行时镜像、CI 复合 action（`node-version-file`）与契约测试保持一致。
   - 新增 `pnpm run verify:docker-smoke`（`deploy/smoke-image.mjs`）：以 Compose 相同的参数启动镜像，检查运行时 Node 版本、`/api/health`（`status=ok`）、`/api/pdf` 生成的 PDF 结构（嵌入字体、Type0 中文字体、ToUnicode），以及 Chromium 预热日志。
@@ -25,7 +25,8 @@
   5. 发布后下载 `MorphDoc-Web-0.6.6-image.tar.gz`，用 `pnpm run verify:docker-smoke` 验证。
 - **待决事项**：
   - `MorphDoc-Web-0.6.5-deploy.zip` 是否从发布页删除。
-  - v0.6.5 的 `RELEASE-NOTES.md` 资产与仓库内 `docs/releases/v0.6.5.md` 仍是修正前的文本；标签说明不可修改（改标签需要移动标签，不建议）。
+  - v0.6.5 的 `RELEASE-NOTES.md` 资产与仓库内 `docs/releases/v0.6.5.md` 仍是修正前的文本（Release 正文已修正）。标签注释随标签固定，不随正文改动。
+  - PR #1 与 PR #2 的历史说明块中仍写着“标签发布从未真实执行”。这是两个 PR 合并当时的状态，保留未改，以免改写历史说明。
   - `manifest.json` 与 `SHA256SUMS.txt` 仍列出已删除的镜像，作为发布时的记录保留。
   - 桌面产物仍未做代码签名。
 
