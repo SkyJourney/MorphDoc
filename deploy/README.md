@@ -9,9 +9,9 @@ Playwright Chromium 生成 PDF，并使用固定 Pandoc `3.9.0.2` 生成
 
 要求已经安装并启动 Docker Desktop。
 
-```powershell
-docker compose -f deploy\compose.yaml up --build -d
-docker compose -f deploy\compose.yaml ps
+```text
+docker compose -f deploy/compose.yaml up --build -d
+docker compose -f deploy/compose.yaml ps
 ```
 
 打开：
@@ -20,26 +20,41 @@ docker compose -f deploy\compose.yaml ps
 http://localhost:8080
 ```
 
-健康检查：
+健康检查（PowerShell）：
 
 ```powershell
 Invoke-RestMethod -Uri 'http://localhost:8080/api/health'
 ```
 
+健康检查（bash / zsh）：
+
+```bash
+curl -fsS http://localhost:8080/api/health
+```
+
 查看日志和停止：
 
-```powershell
-docker compose -f deploy\compose.yaml logs -f
-docker compose -f deploy\compose.yaml down
+```text
+docker compose -f deploy/compose.yaml logs -f
+docker compose -f deploy/compose.yaml down
 ```
 
 ## 构建发布标签
 
 可以直接指定版本化镜像名称构建：
 
+PowerShell：
+
 ```powershell
 $env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
-docker compose -f deploy\compose.yaml build
+docker compose -f deploy/compose.yaml build
+```
+
+bash / zsh：
+
+```bash
+export MORPHDOC_IMAGE='morphdoc:v<版本>'
+docker compose -f deploy/compose.yaml build
 ```
 
 其中 `<版本>` 为根 `package.json` 的 `version`。该命令只生成本地镜像，不会自动推送到镜像仓库。
@@ -47,11 +62,22 @@ docker compose -f deploy\compose.yaml build
 默认构建会安装项目锁定版本的 Playwright Chromium 及系统依赖。如果本机
 已经保留同版本系列的已验证镜像，可在内网或软件源较慢时复用其运行层：
 
+PowerShell：
+
 ```powershell
 $env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
 $env:MORPHDOC_RUNTIME_BASE_IMAGE = 'morphdoc:v<较早的已验证版本>'
 $env:MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME = '1'
-docker compose -f deploy\compose.yaml build
+docker compose -f deploy/compose.yaml build
+```
+
+bash / zsh：
+
+```bash
+export MORPHDOC_IMAGE='morphdoc:v<版本>'
+export MORPHDOC_RUNTIME_BASE_IMAGE='morphdoc:v<较早的已验证版本>'
+export MORPHDOC_REUSE_PLAYWRIGHT_RUNTIME=1
+docker compose -f deploy/compose.yaml build
 ```
 
 复用模式会校验基础镜像中存在 Chromium，再覆盖当前版本的应用代码和生产
@@ -62,9 +88,18 @@ docker compose -f deploy\compose.yaml build
 Compose 默认将项目的 `.local/themes` 只读挂载到容器中的
 `/app/.local/themes`。可以通过环境变量指定其他目录：
 
+PowerShell：
+
 ```powershell
-$env:MORPHDOC_THEME_DIR = 'D:\morphdoc-themes'
-docker compose -f deploy\compose.yaml up -d
+$env:MORPHDOC_THEME_DIR = '<主题目录的绝对路径>'
+docker compose -f deploy/compose.yaml up -d
+```
+
+bash / zsh：
+
+```bash
+export MORPHDOC_THEME_DIR='<主题目录的绝对路径>'
+docker compose -f deploy/compose.yaml up -d
 ```
 
 目录下每套主题都应包含 `theme.json`。主题规范详见
@@ -91,9 +126,9 @@ docker compose -f deploy\compose.yaml up -d
 
 从源码构建镜像前，先从仓库外冻结源生成字体包，再构建镜像：
 
-```powershell
+```text
 pnpm run build:font-pack
-docker compose -f deploy\compose.yaml up -d
+docker compose -f deploy/compose.yaml up -d
 ```
 
 字体二进制直接以普通 Git 对象固定在仓库中。Docker 构建上下文只放行构建所需
@@ -103,8 +138,17 @@ docker compose -f deploy\compose.yaml up -d
 
 发布前执行真实内置字体门禁：
 
+PowerShell：
+
 ```powershell
 $env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
+pnpm run verify:docker-font-pack
+```
+
+bash / zsh：
+
+```bash
+export MORPHDOC_IMAGE='morphdoc:v<版本>'
 pnpm run verify:docker-font-pack
 ```
 
@@ -117,8 +161,17 @@ pnpm run verify:docker-font-pack
 
 字体门禁只覆盖字体包与 DOCX 链路。发布前还必须真正启动镜像，并通过它生成一份 PDF：
 
+PowerShell：
+
 ```powershell
 $env:MORPHDOC_IMAGE = 'morphdoc:v<版本>'
+pnpm run verify:docker-smoke
+```
+
+bash / zsh：
+
+```bash
+export MORPHDOC_IMAGE='morphdoc:v<版本>'
 pnpm run verify:docker-smoke
 ```
 
@@ -127,6 +180,28 @@ pnpm run verify:docker-smoke
 Type0 中文字体与 ToUnicode 映射；生成 PDF 后 Chromium 预热没有失败。临时容器在
 结束时删除。在 Apple Silicon 上验证 amd64 镜像时，先设置
 `DOCKER_DEFAULT_PLATFORM=linux/amd64`。
+
+## 离线部署包
+
+Release 页面提供的 `MorphDoc-Web-<版本>-deploy.zip` 与 `MorphDoc-Web-<版本>-image.tar.gz` 配合使用，适用于无法访问镜像仓库的内网环境：
+
+1. 将 `MorphDoc-Web-<版本>-image.tar.gz` 放在部署包目录的上一级，并在该目录中加载镜像：
+
+   ```text
+   docker load --input MorphDoc-Web-<版本>-image.tar.gz
+   ```
+
+   加载后的镜像名为 `morphdoc:v<版本>`，与部署包 `.env.example` 中的 `MORPHDOC_IMAGE` 一致。
+2. 解压部署包，将 `.env.example` 复制为 `.env`，按需调整端口与并发。
+3. 在解压后的部署包目录中执行：
+
+   ```text
+   docker compose --env-file .env up -d --no-build
+   ```
+
+4. 访问 `/api/health`，确认 `status` 为 `ok` 后再开放服务。
+
+离线镜像为 `linux/amd64`。在 arm64 主机上运行时，Docker 会以模拟方式运行并提示平台不一致，建议部署在 amd64 主机上。v0.6.5 的离线镜像无法启动，已从发布页删除，请使用 Release 页面中最新版本的部署包。
 
 ## 运行参数
 
