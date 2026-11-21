@@ -1,7 +1,7 @@
 name: Release
 
 # 版本标签是发布的唯一触发器，且每次都构建完整的一套产物（Windows、macOS 两种架构、
-# Docker 镜像），保证“一个版本就是一套完整、可对应校验和的发行物”。
+# Docker 镜像，镜像须先通过冒烟验收才归集），保证“一个版本就是一套完整、可对应校验和的发行物”。
 #   - 推送 v*.*.* 标签：构建、归集并真实发布 GitHub Release；
 #   - 手动触发（workflow_dispatch）：在所选分支或提交上完整演练构建与归集，不发布。
 # 不再由 Pull Request 触发：演练改为发版前手动运行，见 docs/WORKFLOW.md 第 5 节。
@@ -173,6 +173,13 @@ jobs:
         env:
           MORPHDOC_IMAGE: morphdoc:v${{ needs.prepare.outputs.version }}
         run: docker compose -f deploy/compose.yaml build --pull --no-cache
+
+      # 只构建成功不足以证明镜像可用：此前发布的镜像构建通过却无法启动。冒烟验收会启动同一个镜像，
+      # 检查运行时 Node 版本、健康检查与真实 PDF 生成；失败则不归集、不发布。
+      - name: Smoke test Docker image
+        env:
+          MORPHDOC_IMAGE: morphdoc:v${{ needs.prepare.outputs.version }}
+        run: pnpm run verify:docker-smoke
 
       - name: Resolve release notes
         id: notes

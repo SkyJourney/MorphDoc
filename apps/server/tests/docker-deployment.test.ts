@@ -182,3 +182,22 @@ describe("Node 版本锁定", () => {
     }
   });
 });
+
+describe("发布工作流契约", () => {
+  it("在归集镜像之前，对构建出的同一个镜像执行冒烟验收", () => {
+    // 只构建成功不足以证明镜像可用，因此冒烟必须排在归集之前；验收的镜像引用也必须与构建相同，
+    // 否则归集的可能是另一份未经验收的镜像
+    const workflow = readProjectFile(".github/workflows/release.yml");
+    const buildIndex = workflow.indexOf("run: docker compose -f deploy/compose.yaml build");
+    const smokeIndex = workflow.indexOf("run: pnpm run verify:docker-smoke");
+    const stageIndex = workflow.indexOf("run: node scripts/stage-release.mjs");
+
+    expect(buildIndex).toBeGreaterThan(-1);
+    expect(smokeIndex).toBeGreaterThan(buildIndex);
+    expect(stageIndex).toBeGreaterThan(smokeIndex);
+    const smokeStepStart = workflow.lastIndexOf("- name:", smokeIndex);
+    expect(workflow.slice(smokeStepStart, smokeIndex)).toContain(
+      "MORPHDOC_IMAGE: morphdoc:v${{ needs.prepare.outputs.version }}"
+    );
+  });
+});
