@@ -4,25 +4,24 @@
 
 ## 当前交接（2026-11-21）
 
-- **线上最新正式版**：v0.6.5（2026-11-20 发布；标签 `v0.6.5` 指向发布提交 `29e0ff3`；Release 工作流运行 44710298483 成功）。
+- **线上最新正式版**：v0.6.5（2026-11-20 发布；标签 `v0.6.5` 指向发布提交 `29e0ff3`；Release 工作流运行 44710298483 成功）。v0.6.6 发布进行中，尚未合并，也未打标签。
 - **v0.6.5 的 Docker 镜像不可用**。镜像能够构建，但启动即退出：
   - 运行层只复制了根目录的 `node_modules`，服务报 `Cannot find package 'fastify'`；
   - 镜像内以 `npx playwright install` 安装 Chromium，拉取的是未锁定的最新版 Playwright，浏览器版本与服务所需不一致。
   - 发布演练只验证了构建与归集，没有启动镜像，所以没有被发现。
 - **已处理**：2026-11-21 已从发布页删除 `MorphDoc-Web-0.6.5-image.tar.gz`；在 v0.6.5 正文末尾加入勘误，并修正正文中的残缺句、过时的发布状态说明，以及发行产物中的镜像条目。`MorphDoc-Web-0.6.5-deploy.zip` 仍在发布页，其离线步骤依赖已删除的镜像，待决定是否删除。
-- **PR #16（`fix/lock-node-version`）合并后，`main` 将包含**：
+- **PR #16（`fix/lock-node-version`，合并提交 `f922336`）已合并到 `main`，包含**：
   - Node.js 锁定为 26.13.1：`.nvmrc` 为唯一来源；`deploy/Dockerfile` 三个阶段、`deploy/compose.yaml` 默认运行时镜像、CI 复合 action（`node-version-file`）与契约测试保持一致。
   - 新增 `pnpm run verify:docker-smoke`（`deploy/smoke-image.mjs`）：以 Compose 相同的参数启动镜像，检查运行时 Node 版本、`/api/health`（`status=ok`）、`/api/pdf` 生成的 PDF 结构（嵌入字体、Type0 中文字体、ToUnicode），以及 Chromium 预热日志。
   - 发布工作流（`release.yml` 的 Stage 任务）在构建镜像之后、归集之前执行冒烟验收，失败则不归集、不发布。
   - 修复：冒烟脚本注释中写死了版本号，被 `version:check` 拦截，导致三平台 `Test` 失败；已改为不含版本号的描述。
   - 文档同步：README、`deploy/README.md`、`docs/WORKFLOW.md`、`docs/PANDOC_DISTRIBUTION.md`、本文件。
   - 合并前的本地验证：amd64 镜像通过 `verify:docker-font-pack` 与 `verify:docker-smoke`（PDF 95796 字节）；Node 22 镜像与启动即退出的镜像均被冒烟脚本拒绝。PR 的 CI 与发布演练结果见 PR #16 的检查记录。
-- **下一步**：
-  1. 合并 PR #16（squash，标题前缀 `fix:`）。
-  2. 开 v0.6.6 发布 PR：运行 `pnpm run version:set 0.6.6`，补全 `docs/releases/v0.6.6.md` 的概述、验证结果与迁移说明；迁移说明须写明 v0.6.5 镜像问题及替代做法。
-  3. 在发布 PR 分支上手动运行演练（`gh workflow run release.yml --ref <分支>`），确认冒烟步骤通过后回填验证结果，再以 `release:` 前缀合并。
-  4. 打标签前再次向用户确认。标签使用 annotated tag，说明与发布提交正文一致。
-  5. 发布后下载 `MorphDoc-Web-0.6.6-image.tar.gz`，用 `pnpm run verify:docker-smoke` 验证。
+- **进行中：v0.6.6 发布**（分支 `release/v0.6.6`，尚未合并，也未打标签）：
+  1. 演练（运行 `44855840548`）、产物核对、离线镜像加载与冒烟、离线部署包启动均已完成，结果已回填到 `docs/releases/v0.6.6.md`。
+  2. 合并前运行 `node scripts/version.mjs check --release`，确认没有残留的【待补充】。合并采用 squash，标题前缀 `release:`。
+  3. 打标签前再次向用户确认。标签使用 annotated tag，说明与发布提交正文一致。
+  4. 发布后下载 `MorphDoc-Web-0.6.6-image.tar.gz` 再次验证，并更新本文件的“线上最新正式版”。
 - **待决事项**：
   - `MorphDoc-Web-0.6.5-deploy.zip` 是否从发布页删除。
   - v0.6.5 的 `RELEASE-NOTES.md` 资产与仓库内 `docs/releases/v0.6.5.md` 仍是修正前的文本（Release 正文已修正）。标签注释随标签固定，不随正文改动。
@@ -30,7 +29,7 @@
   - `manifest.json` 与 `SHA256SUMS.txt` 仍列出已删除的镜像，作为发布时的记录保留。
   - 桌面产物仍未做代码签名。
 
-## 版本与 PR 记录（#5 至 #16）
+## 版本与 PR 记录（#5 至 #17）
 
 - #5 统一版本号来源，建立 `version:check`；#6 `version:set` 生成 CHANGELOG 与发行说明骨架；#7 测试临时仓库身份改为 SkyJourney。
 - #8、#9、#10 修复发行说明生成器：占位检查忽略折叠的提交正文、末尾只保留单个换行、折叠块只做精确匹配。
@@ -38,6 +37,7 @@
 - #14 CI 与发布基线升级到 Node 26，action 升级到 node24 运行时。
 - #15 容器运行时基础镜像升级到 Node 26，并修复依赖断链与 Chromium 版本错配。
 - #16 锁定 Node.js 26.13.1，新增镜像冒烟验收并接入发布工作流。
+- #17 发布 v0.6.6（`release/v0.6.6`）：版本号、CHANGELOG、发行说明与进度文档。演练与产物验收通过，等待合并与打标签确认。
 
 ## CI/CD 流水线与测试体系
 

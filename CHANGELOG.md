@@ -13,6 +13,20 @@ GitHub Release 页面正文的基础；构建产物、校验和及详细验收�
 
 - 暂无。
 
+## [0.6.6] - 2026-11-21
+
+### 修复
+
+- 锁定 Node.js 26.13.1 并增加镜像冒烟验收 ([#16](https://github.com/SkyJourney/MorphDoc/pull/16))
+
+### 变更
+
+- 将 CI 与发布基线升级到 Node 26，并使用 node24 运行时的 action ([#14](https://github.com/SkyJourney/MorphDoc/pull/14))
+
+### 其他变更
+
+- 容器运行时基础镜像升级到 Node 26，并修复两个既有启动缺陷 ([#15](https://github.com/SkyJourney/MorphDoc/pull/15))
+
 ## [0.6.5] - 2026-11-20
 
 ### 新增
