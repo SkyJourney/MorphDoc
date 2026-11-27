@@ -13,6 +13,19 @@ GitHub Release 页面正文的基础；构建产物、校验和及详细验收�
 
 - 暂无。
 
+## [0.6.7] - 2026-11-27
+
+### 修复
+
+- 修复 Paged.js 分页接缝导致的表格重复、空页与标题孤立 ([#22](https://github.com/SkyJourney/MorphDoc/pull/22))
+
+### 变更
+
+- 记录阶段收尾状态、分支与镜像清理结果 ([#21](https://github.com/SkyJourney/MorphDoc/pull/21))
+- 同步 Node 版本、平台说明、发版流程与进度文档 ([#20](https://github.com/SkyJourney/MorphDoc/pull/20))
+- 发布 Prepare 接入发布门禁 ([#19](https://github.com/SkyJourney/MorphDoc/pull/19))
+
+
 ## [0.6.6] - 2026-11-21
 
 ### 修复
