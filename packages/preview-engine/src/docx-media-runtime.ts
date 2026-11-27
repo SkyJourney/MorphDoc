@@ -899,7 +899,9 @@ export async function renderDocxMediaCapturePlan(
     // DOCX 只消费分页表格的宽度、偏移和列宽比例；完整行结构与样式随后
     // 从连续 DOM 重新采集。Paged.js 偶发丢失边界行时允许几何降级，
     // 正常 PDF 渲染仍保持严格的正文行完整性门禁。
-    allowIncompleteTableGeometry: true
+    allowIncompleteTableGeometry: true,
+    // 表格列宽要与 Word 的表格模型对应，不能为适应页面而被改动
+    fitTablesToPageWidth: false
   });
   if (!pagedResult) {
     throw new Error("DOCX 分页布局渲染已取消");

@@ -14,7 +14,12 @@ src/
 ├── continuous-preview.ts       无分页 DOM 更新与稳定节点复用
 ├── docx-media-runtime.ts       DOCX 连续媒体舞台与 PNG 捕获计划
 ├── incremental-pagination.ts   修改边界、稳定前缀与后缀分页缓存
-├── paged-table-handler.ts      跨页表格表头处理
+├── paged-table-handler.ts      跨页表格表头处理、表格行不变量
+├── paged-table-fit.ts          超宽表格适配页宽
+├── paged-inline-style-guard.ts 避免内联样式被 Paged.js 误判为不显示
+├── paged-break-control.ts      强制分页的统一入口（分页意图）
+├── paged-pagination-invariants.ts 分页后检查与修复的运行器
+├── paged-stranded-headings.ts  标题孤立在页末的检测与修复
 ├── media-page-backfill.ts      图片与图表按文档顺序回填
 ├── document-image-fit.ts       Markdown 图片单页适配
 ├── mermaid-*.ts                Mermaid 配置、渲染与尺寸适配
@@ -60,6 +65,13 @@ const mediaPlan = await renderDocxMediaCapturePlan(
 
 `payload` 使用 `@morphdoc/core` 中的 `PagedDocumentPayload`。主题 CSS、
 纸张尺寸、页边距、页眉页脚及 Markdown 功能标识都随载荷传入。
+
+## 分页适配层
+
+Paged.js 有几处与直觉不符的行为（例如不识别内联 `break-*`、把带内联样式的元素误判为不显示），
+本包用三层适配收敛它们：输入边界的内联样式守卫、强制分页的统一入口 `forceBreakBefore` /
+`forceBreakAfter`、分页后的不变量运行器。**强制分页不要写内联样式**，源码守卫测试会拒绝。
+设计、扩展方法、测试体系与已知限制见 [分页适配层](../../docs/PAGINATION.md)。
 
 ## 连续预览与增量分页
 

@@ -15,6 +15,10 @@
     "diagrams.md": { "features": ["mermaid", "echarts"], "warnings": 0 },
     "echarts-invalid.md": { "features": ["echarts"], "warnings": 1 },
     "tables-edge.md": { "features": ["table"], "warnings": 0 },
+    "table-chart-seam.md": { "features": ["table", "echarts"], "warnings": 0 },
+    "tall-media.md": { "features": ["mermaid", "echarts"], "warnings": 0 },
+    "heading-chain-media.md": { "features": ["mermaid", "echarts"], "warnings": 0 },
+    "cover-tender.md": { "features": ["table"], "warnings": 0 },
     "code-languages.md": { "features": ["code"], "warnings": 0 },
     "frontmatter-plain.md": {
       "features": [],

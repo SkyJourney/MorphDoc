@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
   defaultSeed,
   generateStressFixtures,
+  generateTableChartSeam,
+  tableChartSeamSections,
   toCrlf,
   whitespaceInputs,
   withBom
@@ -151,6 +153,71 @@ describe("压力夹具", () => {
     expect(count(html("stress-many-images"), /<figure\b/gu)).toBe(40);
     expect(count(html("stress-many-footnotes"), /<sup class="footnote-ref"/gu)).toBe(50);
     expect(count(html("stress-many-footnotes"), /<li id="footnote\d+"/gu)).toBe(50);
+  });
+});
+
+describe("表格分页接缝夹具", () => {
+  const staticText = readFileSync(`${staticDirectory}table-chart-seam.md`, "utf8");
+  const lines = staticText.split("\n");
+
+  it("静态夹具与生成器的默认输出逐字节一致，修改生成器后必须重新生成", () => {
+    expect(staticText).toBe(generateTableChartSeam());
+  });
+
+  it("对同一种子逐字节确定，不同种子产生不同内容，小节数可调", () => {
+    expect(generateTableChartSeam({ seed: 7 })).toBe(generateTableChartSeam({ seed: 7 }));
+    expect(generateTableChartSeam({ seed: 7 })).not.toBe(generateTableChartSeam({ seed: 8 }));
+    const headings = (text: string) =>
+      text.split("\n").filter((line) => line.startsWith("### ")).length;
+    expect(headings(generateTableChartSeam({ sections: 3 }))).toBe(3);
+    expect(headings(staticText)).toBe(tableChartSeamSections);
+  });
+
+  it("每个小节标题之后紧跟表格、表格之后紧跟图表：这个结构正是触发缺陷的条件", () => {
+    // 不能被“改进”成在标题与表格之间插入说明段落——那会让夹具失去触发能力
+    const headingIndexes = lines.flatMap((line, index) =>
+      line.startsWith("### ") ? [index] : []
+    );
+    expect(headingIndexes).toHaveLength(tableChartSeamSections);
+    for (const headingIndex of headingIndexes) {
+      expect(lines[headingIndex + 1], "标题之后是空行").toBe("");
+      expect(lines[headingIndex + 2], "空行之后直接是表头").toMatch(/^\| 代码 \|/u);
+      let cursor = headingIndex + 2;
+      while (lines[cursor]?.startsWith("|")) cursor += 1;
+      expect(lines[cursor], "表格之后是空行").toBe("");
+      expect(lines[cursor + 1], "空行之后直接是图表围栏").toBe("```echarts");
+    }
+  });
+
+  it("表格足够长、会跨页：每张表至少 10 行，且行数各不相同以覆盖不同的页面偏移", () => {
+    const rowCounts: number[] = [];
+    let current = 0;
+    for (const line of lines) {
+      if (line.startsWith("| `")) {
+        current += 1;
+      } else if (current > 0) {
+        rowCounts.push(current);
+        current = 0;
+      }
+    }
+    expect(rowCounts).toHaveLength(tableChartSeamSections);
+    expect(Math.min(...rowCounts)).toBeGreaterThanOrEqual(10);
+    expect(new Set(rowCounts).size).toBeGreaterThan(tableChartSeamSections / 2);
+  });
+
+  it("填充段落数各不相同，让接缝落在页面的不同偏移上", () => {
+    const fillerCounts: number[] = [];
+    let current = 0;
+    for (const line of lines) {
+      if (line.startsWith("填充段落")) {
+        current += 1;
+      } else if (line.startsWith("## ")) {
+        fillerCounts.push(current);
+        current = 0;
+      }
+    }
+    expect(fillerCounts).toHaveLength(tableChartSeamSections);
+    expect(new Set(fillerCounts).size).toBeGreaterThan(3);
   });
 });
 
