@@ -85,6 +85,17 @@ function stabilizeConstrainedCoverFlow(cover: HTMLElement) {
   cover.style.display = "block";
 }
 
+/**
+ * 在被约束为单页的封面之后插入零高度锚点。
+ *
+ * 注意：锚点上的内联 `break-after` 不会被 Paged.js 识别（它只从 CSS 规则解析分页声明），
+ * 对分页没有任何作用，封面之后的内容靠“封面撑满一页后自然溢出”落到下一页。
+ *
+ * 不要把它改成 `forceBreakAfter(anchor)`：约束后的封面只比页面内容区矮 8px，零高度的
+ * 锚点常常被挤到下一页，对它再强制“其后换页”就会得到一张只有锚点的空白页。实测在
+ * A5 横向的投标封面上，迁移后页数由 4 页变为 5 页，第 2 页为空（见
+ * e2e/tests/media-fit.spec.ts 的“约束封面不产生空白页”）。
+ */
 function insertCoverPageBreakAnchor(cover: HTMLElement) {
   const anchor = cover.ownerDocument.createElement("div");
   anchor.dataset.semanticCoverPageBreakAnchor = "true";

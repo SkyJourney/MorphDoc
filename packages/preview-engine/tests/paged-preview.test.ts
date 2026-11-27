@@ -15,6 +15,7 @@ import {
   shouldRenderPageNumber,
   type PagedPreviewPayload
 } from "../src/paged-preview.js";
+import { TABLE_FIT_ATTRIBUTE } from "../src/paged-table-fit.js";
 
 const payload: PagedPreviewPayload = {
   articleHtml: '<article id="write"><h1>分页测试</h1></article>',
@@ -210,6 +211,24 @@ describe("分页预览协议", () => {
     expect(documentGeometryCss).toContain(
       "background: transparent !important"
     );
+  });
+
+  it("超宽表格压缩单元格内边距的规则与代码里的属性名一致，且能压过主题", () => {
+    // 规则的选择器写的是字面量属性名；属性名若在代码里改了而这里没改，规则会静默失效
+    const rule = new RegExp(
+      String.raw`#write table\[${TABLE_FIT_ATTRIBUTE}\] (th|td)`,
+      "gu"
+    );
+    expect(documentGeometryCss.match(rule)).toEqual([
+      `#write table[${TABLE_FIT_ATTRIBUTE}] th`,
+      `#write table[${TABLE_FIT_ATTRIBUTE}] td`
+    ]);
+    // 样式表按“基础、主题、几何”的顺序叠加，主题里的 td/th 内边距写法不一，
+    // 只有放在几何样式里并加 !important 才能稳定地压过它们
+    expect(documentGeometryCss).toMatch(
+      /table\[data-morphdoc-table-fit\] td \{[^}]*padding-left: 2px !important;[^}]*padding-right: 2px !important;/u
+    );
+    expect(documentBaseCss).not.toContain(TABLE_FIT_ATTRIBUTE);
   });
 
   it("由语义文档强制封面结束后换页", () => {

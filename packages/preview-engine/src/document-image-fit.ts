@@ -80,6 +80,13 @@ export function fitDocumentImagesToPage(
       continue;
     }
     if (block?.classList.contains("md-document-image-block")) {
+      // 关于下面的内联 break-after / 占位标记：Paged.js 只从 CSS 规则解析 break-* 声明，元素上的
+      // 内联样式会被完全忽略，所以它们对分页没有任何作用。缩放后的块撑满一页，其后的内容靠
+      // “自然溢出”落到下一页。
+      // 曾评估改用 forceBreakAfter（paged-break-control.ts）：只有一个标题紧接整页媒体时分页结果
+      // 逐页一致，但连续标题紧接整页媒体时，迁移后流程图会额外出现重复渲染，当时据此暂不迁移。
+      // 那次重复的根因是整页缩放只扣除紧邻的一个标题，已由 getPrecedingHeadingChain 修复，
+      // 迁移的前提已具备，需要用修复后的构建重新评估。
       block.dataset.pageHeightFitted = "true";
       block.style.setProperty("margin-block", "0", "important");
       block.style.setProperty("break-after", "page", "important");

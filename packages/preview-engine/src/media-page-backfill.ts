@@ -1,3 +1,5 @@
+import { getPrecedingHeadingChain } from "./diagram-page-fit.js";
+
 export type MediaBackfillKind = "image" | "mermaid" | "echarts";
 
 export interface MediaBackfillGeometry {
@@ -91,19 +93,11 @@ function getMediaGroupTop(
   block: HTMLElement,
   pageContentTop: number
 ) {
-  const title = block.previousElementSibling;
-  if (
-    title instanceof HTMLElement &&
-    /^H[1-6]$/.test(title.tagName)
-  ) {
-    return Math.max(
-      pageContentTop,
-      getOuterTop(title)
-    );
-  }
+  // 媒体组 = 媒体块 + 它前面整串连续标题，组的顶部是最靠前那个标题的顶部
+  const firstTitle = getPrecedingHeadingChain(block)[0];
   return Math.max(
     pageContentTop,
-    getOuterTop(block)
+    getOuterTop(firstTitle ?? block)
   );
 }
 
@@ -135,13 +129,8 @@ function getLastContentBottom(pageContent: HTMLElement) {
 }
 
 function hasForcedBreakBefore(block: HTMLElement) {
-  const title = block.previousElementSibling;
-  const elements = [
-    block,
-    title instanceof HTMLElement && /^H[1-6]$/.test(title.tagName)
-      ? title
-      : undefined
-  ].filter((element): element is HTMLElement => Boolean(element));
+  // 整串连续标题中任何一个声明了“之前换页”，整个媒体组都从新页开始
+  const elements = [block, ...getPrecedingHeadingChain(block)];
   return elements.some((element) => {
     const style = getComputedStyle(element);
     return (

@@ -211,7 +211,7 @@ describe("媒体分页空白回填", () => {
     expect(findMediaBackfillCandidates(root)).toEqual([]);
   });
 
-  it("忽略媒体之前其他内容的显式分页规则", () => {
+  it("忽略媒体之前其他内容（非标题）的显式分页规则", () => {
     const root = document.createElement("div");
     root.innerHTML = `
       <div class="pagedjs_page">
@@ -221,9 +221,9 @@ describe("媒体分页空白回填", () => {
       </div>
       <div class="pagedjs_page">
         <div class="pagedjs_page_content">
-          <h1 data-ref="earlier-heading" style="break-before: page">
-            本页章节
-          </h1>
+          <p data-ref="earlier-content" style="break-before: page">
+            本页开头的其他内容
+          </p>
           <h2 data-ref="media-title">图片标题</h2>
           <figure
             class="md-document-image-block"
@@ -243,7 +243,9 @@ describe("媒体分页空白回填", () => {
     const previousFlow = root.querySelector<HTMLElement>(
       "[data-ref='previous-content']"
     )!;
-    const earlierHeading = root.querySelector<HTMLElement>("h1")!;
+    const earlierContent = root.querySelector<HTMLElement>(
+      "[data-ref='earlier-content']"
+    )!;
     const title = root.querySelector<HTMLElement>("h2")!;
     const block = root.querySelector<HTMLElement>("figure")!;
     const image = root.querySelector<HTMLImageElement>("img")!;
@@ -253,7 +255,7 @@ describe("媒体分页空白回填", () => {
       positionedRect(100, 700, 550);
     pageContents[1]!.getBoundingClientRect = () =>
       positionedRect(100, 700, 1_000);
-    earlierHeading.getBoundingClientRect = () =>
+    earlierContent.getBoundingClientRect = () =>
       positionedRect(100, 600, 40);
     title.getBoundingClientRect = () =>
       positionedRect(150, 600, 40);
@@ -265,6 +267,45 @@ describe("媒体分页空白回填", () => {
     expect(findMediaBackfillCandidates(root)).toEqual([
       { id: "media-1", scale: 0.92 }
     ]);
+  });
+
+  it("连续标题串中任何一个声明了之前换页，整个媒体组只能从新页开始，不回填", () => {
+    // h1 与 h2 紧挨着，break-after: avoid 把它们与图片连成一个整体：h1 要换页，
+    // 图片就不可能被挪回上一页。此前只看紧邻的一个标题，会为它白白缩小图片。
+    const root = document.createElement("div");
+    root.innerHTML = `
+      <div class="pagedjs_page">
+        <div class="pagedjs_page_content">
+          <div data-ref="previous-content">上一页内容</div>
+        </div>
+      </div>
+      <div class="pagedjs_page">
+        <div class="pagedjs_page_content">
+          <h1 data-ref="earlier-heading" style="break-before: page">本页章节</h1>
+          <h2 data-ref="media-title">图片标题</h2>
+          <figure
+            class="md-document-image-block"
+            data-ref="media-block"
+            data-media-backfill-id="media-1"
+            data-media-baseline-width="600"
+            data-media-baseline-height="400"
+          >
+            <img class="md-document-image">
+          </figure>
+        </div>
+      </div>
+    `;
+    const pageContents = root.querySelectorAll<HTMLElement>(".pagedjs_page_content");
+    const previousFlow = root.querySelector<HTMLElement>("[data-ref='previous-content']")!;
+    pageContents[0]!.getBoundingClientRect = () => positionedRect(100, 700, 1_000);
+    previousFlow.getBoundingClientRect = () => positionedRect(100, 700, 550);
+    pageContents[1]!.getBoundingClientRect = () => positionedRect(100, 700, 1_000);
+    root.querySelector<HTMLElement>("h1")!.getBoundingClientRect = () => positionedRect(100, 600, 40);
+    root.querySelector<HTMLElement>("h2")!.getBoundingClientRect = () => positionedRect(150, 600, 40);
+    root.querySelector<HTMLElement>("figure")!.getBoundingClientRect = () => positionedRect(200, 600, 330);
+    root.querySelector<HTMLElement>("img")!.getBoundingClientRect = () => positionedRect(200, 600, 300);
+
+    expect(findMediaBackfillCandidates(root)).toEqual([]);
   });
 
   it("将候选缩放应用到图片和 ECharts 主体", () => {

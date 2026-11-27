@@ -56,10 +56,10 @@
       "branches": 83
     },
     "preview-engine": {
-      "lines": 64,
-      "statements": 64,
-      "functions": 76,
-      "branches": 57
+      "lines": 67,
+      "statements": 67,
+      "functions": 78,
+      "branches": 61
     },
     "application": {
       "lines": 72,

@@ -8,7 +8,9 @@ import {
   collectDocxListItemLayouts,
   collectDocxTextBlockLayouts,
   collectDocxMediaCaptureTargets,
+  createTableRowInvariants,
   forcePagedTableRowsToNextPage,
+  hasForcedBreak,
   mergePagedTableGeometries,
   missingPagedTableRowIds,
   protectFittableInlineCodeParagraphs,
@@ -16,7 +18,9 @@ import {
   renderDocxMediaCapturePlan,
   restorePagedTableColumns,
   restorePagedTableStructure,
-  stabilizePagedTableColumns
+  stabilizePagedTableColumns,
+  TABLE_ROW_DUPLICATED_INVARIANT_ID,
+  TABLE_ROW_MISSING_INVARIANT_ID
 } from "../src/index.js";
 
 describe("DOCX 媒体捕获计划", () => {
@@ -69,11 +73,14 @@ describe("DOCX 媒体捕获计划", () => {
       expect.anything(),
       expect.objectContaining({ themeMedia: "print" })
     );
+    // DOCX 借用分页布局测量表格几何：允许几何降级，且必须显式关闭“适配页宽”，
+    // 否则表格列宽会被改成适应页面的样子，与 Word 的表格模型对不上
     expect(render).toHaveBeenCalledWith(
       expect.anything(),
       {
         target: "pdf",
-        allowIncompleteTableGeometry: true
+        allowIncompleteTableGeometry: true,
+        fitTablesToPageWidth: false
       }
     );
   });
@@ -722,7 +729,7 @@ describe("DOCX 媒体捕获计划", () => {
     expect(tall.dataset.morphdocTableRowKeepWhole).toBe("false");
   });
 
-  it("检测分页后缺失的可容纳正文行并施加恢复断点", () => {
+  it("检测分页后缺失的可容纳正文行并以分页意图让它换页", () => {
     document.body.innerHTML = `
       <main id="source"><table><tbody>
         <tr data-morphdoc-table-row-id="row-1" data-morphdoc-table-row-keep-whole="true"><td>甲</td></tr>
@@ -737,28 +744,45 @@ describe("DOCX 媒体捕获计划", () => {
     const rendered = document.querySelector("#rendered")!;
 
     expect(missingPagedTableRowIds(source, rendered)).toEqual(["row-1"]);
-    expect(forcePagedTableRowsToNextPage(source, ["row-1"])).toBe(1);
+    expect(forcePagedTableRowsToNextPage(source, ["row-1"])).toEqual({
+      located: 1,
+      added: 1
+    });
     const row = source.querySelector<HTMLTableRowElement>(
       '[data-morphdoc-table-row-id="row-1"]'
     )!;
     const table = row.closest("table")!;
-    const marker = table.previousElementSibling as HTMLElement;
-    expect(marker.dataset.morphdocTableRecoveryMarker).toBe("true");
-    expect(marker.textContent).toBe("\u00a0");
-    expect(marker.style.getPropertyValue("height")).toBe("1px");
-    expect(marker.style.getPropertyValue("margin-bottom")).toBe("-1px");
-    expect(marker.style.getPropertyValue("opacity")).toBe("0");
-    expect(marker.style.getPropertyValue("break-before")).toBe("page");
-    expect(marker.style.getPropertyPriority("break-before")).toBe("important");
-    expect(table.dataset.morphdocTableRecovery).toBe("true");
+    // 缺失的是整张表的第一行：表头已在上一页，应让整张表换页
+    expect(hasForcedBreak(table, "before")).toBe(true);
+    expect(hasForcedBreak(row, "before")).toBe(false);
     expect(row.dataset.morphdocTableRowRecovery).toBe("true");
-    expect(forcePagedTableRowsToNextPage(source, ["row-1"])).toBe(1);
-    expect(source.querySelectorAll("[data-morphdoc-table-recovery-marker]"))
-      .toHaveLength(1);
-
+    // 不再依赖 Paged.js 不识别的内联样式，也不再拆表或插入占位标记
+    expect(table.hasAttribute("style")).toBe(false);
+    expect(source.querySelectorAll("table")).toHaveLength(1);
+    expect(source.querySelector("[data-morphdoc-table-recovery-marker]"))
+      .toBeNull();
   });
 
-  it("在非首行缺失时拆分续表并将恢复断点放到表格外", () => {
+  it("重复施加同一行的恢复是幂等的：已定位但不重复计入新增", () => {
+    document.body.innerHTML = `
+      <main id="source"><table><tbody>
+        <tr data-morphdoc-table-row-id="row-1"><td>甲</td></tr>
+        <tr data-morphdoc-table-row-id="row-2"><td>乙</td></tr>
+      </tbody></table></main>
+    `;
+    const source = document.querySelector("#source")!;
+
+    expect(forcePagedTableRowsToNextPage(source, ["row-2"])).toEqual({
+      located: 1,
+      added: 1
+    });
+    expect(forcePagedTableRowsToNextPage(source, ["row-2"])).toEqual({
+      located: 1,
+      added: 0
+    });
+  });
+
+  it("在非首行缺失时只让该行换页，续页表头交给分页处理器重复", () => {
     document.body.innerHTML = `
       <main id="source"><table id="source-table">
         <colgroup><col><col></colgroup>
@@ -773,25 +797,47 @@ describe("DOCX 媒体捕获计划", () => {
     `;
     const source = document.querySelector("#source")!;
 
-    expect(forcePagedTableRowsToNextPage(source, ["row-2"])).toBe(1);
+    expect(forcePagedTableRowsToNextPage(source, ["row-2"])).toEqual({
+      located: 1,
+      added: 1
+    });
 
-    const tables = source.querySelectorAll<HTMLTableElement>("table");
-    expect(tables).toHaveLength(2);
-    expect(Array.from(tables[0]!.querySelectorAll("tbody > tr")).map(
-      (row) => (row as HTMLElement).dataset.morphdocTableRowId
-    )).toEqual(["row-1"]);
-    expect(Array.from(tables[1]!.querySelectorAll("tbody > tr")).map(
-      (row) => (row as HTMLElement).dataset.morphdocTableRowId
-    )).toEqual(["row-2", "row-3"]);
-    expect(tables[1]!.dataset.morphdocTableRecoveryContinuation).toBe("true");
-    expect(tables[1]!.querySelector("colgroup")).not.toBeNull();
-    expect(tables[1]!.querySelector("thead")).not.toBeNull();
-    expect(tables[0]!.querySelector("tfoot")).toBeNull();
-    expect(tables[1]!.querySelector("tfoot")).not.toBeNull();
-    const marker = tables[1]!.previousElementSibling as HTMLElement;
-    expect(marker.dataset.morphdocTableRecoveryMarker).toBe("true");
-    expect(marker.style.getPropertyValue("break-before")).toBe("page");
-    expect(marker.style.getPropertyPriority("break-before")).toBe("important");
+    // 表格结构保持原样：不拆表、不复制 colgroup/thead/tfoot
+    expect(source.querySelectorAll("table")).toHaveLength(1);
+    const rows = source.querySelectorAll<HTMLElement>("tbody > tr");
+    expect(hasForcedBreak(rows[0]!, "before")).toBe(false);
+    expect(hasForcedBreak(rows[1]!, "before")).toBe(true);
+    expect(hasForcedBreak(rows[2]!, "before")).toBe(false);
+    expect(hasForcedBreak(source.querySelector("table")!, "before")).toBe(false);
+    expect(source.querySelectorAll("thead")).toHaveLength(1);
+    expect(source.querySelectorAll("tfoot")).toHaveLength(1);
+  });
+
+  it("表格行不变量：缺失可修复，重复只检测；定位不全时抛出明确错误", () => {
+    document.body.innerHTML = `
+      <main id="source"><table><tbody>
+        <tr data-morphdoc-table-row-id="row-1" data-morphdoc-table-row-keep-whole="true"><td>甲</td></tr>
+        <tr data-morphdoc-table-row-id="row-2" data-morphdoc-table-row-keep-whole="true"><td>乙</td></tr>
+      </tbody></table></main>
+      <main id="rendered"><table><tbody>
+        <tr data-morphdoc-table-row-id="row-1" data-morphdoc-table-row-keep-whole="true"><td>甲</td></tr>
+        <tr data-morphdoc-table-row-id="row-1" data-morphdoc-table-row-keep-whole="true"><td>甲</td></tr>
+      </tbody></table></main>
+    `;
+    const source = document.querySelector("#source")!;
+    const rendered = document.querySelector("#rendered")!;
+    const [missing, duplicated] = createTableRowInvariants();
+
+    expect(missing!.id).toBe(TABLE_ROW_MISSING_INVARIANT_ID);
+    expect(duplicated!.id).toBe(TABLE_ROW_DUPLICATED_INVARIANT_ID);
+    expect(missing!.detect({ source, rendered })).toEqual(["row-2"]);
+    expect(duplicated!.detect({ source, rendered })).toEqual(["row-1"]);
+    expect(duplicated!.repair).toBeUndefined();
+    expect(missing!.repair!({ source, rendered }, ["row-2"])).toBe(1);
+    expect(missing!.repair!({ source, rendered }, ["row-2"])).toBe(0);
+    expect(() =>
+      missing!.repair!({ source, rendered }, ["row-2", "row-不存在"])
+    ).toThrow("分页表格行恢复标记不完整：缺失 2 行，仅定位 1 行");
   });
 
   it("仅将分页可视区域内真实可见的表格行视为已渲染", () => {

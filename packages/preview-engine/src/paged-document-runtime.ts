@@ -38,10 +38,19 @@ import { replaceMermaidSvgWithImages } from "./mermaid-static-image.js";
 import type { MermaidOutputMode } from "./mermaid-static-image.js";
 import { enablePrintMediaForPreview } from "./preview-styles.js";
 import {
-  forcePagedTableRowsToNextPage,
-  missingPagedTableRowIds,
+  createTableRowInvariants,
   stabilizePagedTableColumns
 } from "./paged-table-handler.js";
+import {
+  describeUnresolvedInvariants,
+  enforcePaginationInvariants
+} from "./paged-pagination-invariants.js";
+import { pagedBreakControlCss } from "./paged-break-control.js";
+import {
+  createStrandedHeadingInvariant,
+  stampHeadingIdentities
+} from "./paged-stranded-headings.js";
+import "./paged-inline-style-guard.js";
 import {
   buildPagedMediaCss,
   continuousDocumentGeometryCss,
@@ -66,6 +75,12 @@ export interface PagedDocumentRenderOptions {
   shouldContinue?: () => boolean;
   mermaidOutput?: MermaidOutputMode;
   allowIncompleteTableGeometry?: boolean;
+  /**
+   * 是否把比页面内容区更宽的表格收进页面（压缩内边距、必要时缩列）。
+   * 默认开启；DOCX 借用分页布局测量表格几何，列宽要与 Word 表格模型对应，
+   * 必须显式关闭。
+   */
+  fitTablesToPageWidth?: boolean;
 }
 
 export interface ContinuousDocumentRenderOptions {
@@ -749,7 +764,10 @@ export class PagedDocumentRuntime {
         );
         stabilizePagedTableColumns(
           measurement.host,
-          getPageContentDimensions(payload.exportConfig).height
+          getPageContentDimensions(payload.exportConfig).height,
+          {
+            fitToAvailableWidth: options.fitTablesToPageWidth ?? true
+          }
         );
         constrainSemanticCoversToPage(
           measurement.host,
@@ -844,9 +862,13 @@ export class PagedDocumentRuntime {
         documentRef,
         buildPagedMediaCss(payload.exportConfig, payload),
         "paged-media"
-      )
+      ),
+      // 分页意图到 Paged.js 可识别规则的映射（见 paged-break-control.ts）
+      stylesheet(documentRef, pagedBreakControlCss, "paged-break-control")
     ];
     const paginateFully = async (sourceContent: DocumentFragment) => {
+      // 重新分页用的源文档没有 data-ref，需要自己建立标题与分页结果的对应关系
+      stampHeadingIdentities(sourceContent);
       const repaginationSource = sourceContent.cloneNode(
         true
       ) as DocumentFragment;
@@ -857,29 +879,11 @@ export class PagedDocumentRuntime {
         stylesheets,
         this.root
       );
-      const maximumTableRowRecoveryAttempts = 3;
-      for (
-        let attempt = 0;
-        attempt < maximumTableRowRecoveryAttempts;
-        attempt += 1
-      ) {
-        const missingRowIds = missingPagedTableRowIds(
-          repaginationSource,
-          this.root
-        );
-        if (missingRowIds.length === 0) {
-          break;
-        }
-        const recoveredCount = forcePagedTableRowsToNextPage(
-          repaginationSource,
-          missingRowIds
-        );
-        if (recoveredCount !== missingRowIds.length) {
-          throw new Error(
-            `分页表格行恢复标记不完整：缺失 ${missingRowIds.length} 行，` +
-              `仅定位 ${recoveredCount} 行`
-          );
-        }
+      /**
+       * 销毁当前分页并基于 `repaginationSource` 重新分页。
+       * 修复动作只修改 `repaginationSource`，每次重排都使用它的新副本。
+       */
+      const repaginate = async () => {
         previewer.chunker.destroy();
         previewer.polisher.destroy();
         previewer = new Previewer();
@@ -889,19 +893,38 @@ export class PagedDocumentRuntime {
           stylesheets,
           this.root
         );
-      }
-      const unresolvedTableRowIds = missingPagedTableRowIds(
-        repaginationSource,
-        this.root
-      );
-      if (
-        unresolvedTableRowIds.length > 0 &&
-        !options.allowIncompleteTableGeometry
-      ) {
-        throw new Error(
-          `分页后表格正文行缺失：${unresolvedTableRowIds.join(", ")}`
-        );
-      }
+      };
+      const invariants = [
+        ...createTableRowInvariants(),
+        // DOCX 只借用分页布局测量表格几何，页面不会呈现给读者，无需修整标题位置
+        ...(options.allowIncompleteTableGeometry
+          ? []
+          : [createStrandedHeadingInvariant()])
+      ];
+      const invariantContext = {
+        source: repaginationSource,
+        rendered: this.root
+      };
+      /**
+       * 修复可修复的不变量并重排；仍然违反的项抛出错误。
+       * 调用方允许表格几何不完整时（DOCX 媒体测量）只做尽力修复。
+       */
+      const enforceInvariants = async () => {
+        const result = await enforcePaginationInvariants({
+          invariants,
+          context: invariantContext,
+          repaginate
+        });
+        // 只有内容错误（severity=error）才会中止；版面瑕疵保留当前结果
+        const fatal = options.allowIncompleteTableGeometry
+          ? []
+          : result.unresolved.filter((item) => item.severity === "error");
+        if (fatal.length > 0) {
+          throw new Error(describeUnresolvedInvariants(fatal));
+        }
+      };
+
+      await enforceInvariants();
       const mediaIds = getMediaBackfillIdsInDocumentOrder(
         repaginationSource
       );
@@ -910,6 +933,7 @@ export class PagedDocumentRuntime {
           (candidate) => [candidate.id, candidate]
         )
       );
+      let mediaBackfilled = false;
       for (const mediaId of mediaIds) {
         if (!shouldContinue()) {
           break;
@@ -924,17 +948,8 @@ export class PagedDocumentRuntime {
           continue;
         }
 
-        previewer.chunker.destroy();
-        previewer.polisher.destroy();
-        previewer = new Previewer();
-        this.activePreviewer = previewer;
-        flow = await previewer.preview(
-          repaginationSource.cloneNode(
-            true
-          ) as DocumentFragment,
-          stylesheets,
-          this.root
-        );
+        await repaginate();
+        mediaBackfilled = true;
         mediaCandidates = new Map(
           findMediaBackfillCandidates(this.root).map(
             (nextCandidate) => [
@@ -943,6 +958,10 @@ export class PagedDocumentRuntime {
             ]
           )
         );
+      }
+      // 媒体回填会改变版面，回填之后需要再确认一次不变量
+      if (mediaBackfilled) {
+        await enforceInvariants();
       }
       return flow.total;
     };

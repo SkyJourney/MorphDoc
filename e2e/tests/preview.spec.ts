@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test, type FrameLocator, type Page } from "@playwright/test";
 
@@ -319,6 +320,139 @@ test.describe("预览渲染（功能）", () => {
       "正常段落必须保留。"
     );
   });
+});
+
+test.describe("表格分页接缝", () => {
+  /**
+   * 缺陷背景：Paged.js 内置过滤器会把带内联 style 的元素（如被稳定化的 table）标成
+   * “不显示”，标题的 break-after: avoid 因此越过表格，落到表格之后的图表上；图表放不下时
+   * 断点回退到整张表之前，表现为表格整体被推到下一页、续页留下空页、整张表从头重放。
+   *
+   * 缺陷与主题有关：GitHub 等主题自带 `tr { page-break-after: auto }`，最后一行会把
+   * 表格之后元素的 data-previous-break-after 覆盖成 auto，恰好掩盖了问题；下面两个主题
+   * 没有这条规则，缺陷会暴露。
+   */
+  const themeIds = ["formal-feasibility", "tender-classic"];
+
+  async function openSeamFixture(page: Page, themeId: string): Promise<void> {
+    await openFixture(page, "table-chart-seam.md");
+    const renderedBeforeThemeChange = await renderedCount(page);
+    await page.getByLabel("预览主题").selectOption(themeId);
+    await waitForPreviewSettled(page, renderedBeforeThemeChange);
+  }
+
+  for (const themeId of themeIds) {
+    // 直接断言因果机制，不依赖字体与页面几何：标题的“避免在其后分页”必须落在紧随其后的
+    // 表格上，而不能越过表格落到图表上。该断言在缺陷存在时必然失败。
+    test(`table-chart-seam.md 在 ${themeId} 主题下标题的 break-after 标记落在表格上`, async ({ page }) => {
+      const errors = collectErrors(page);
+      await openSeamFixture(page, themeId);
+
+      const marks = await previewFrame(page)
+        .locator(".pagedjs_page")
+        .first()
+        .evaluate((first) => {
+          const refsWith = (selector: string) =>
+            new Set(
+              Array.from(first.ownerDocument.querySelectorAll<HTMLElement>(selector)).map(
+                (element) => element.dataset.ref
+              )
+            ).size;
+          return {
+            tablesMarked: refsWith('table[data-previous-break-after="avoid"]'),
+            figuresMarked: refsWith('figure[data-previous-break-after="avoid"]')
+          };
+        });
+
+      // 夹具中每个小节都是“标题 → 表格 → 图表”，小节数取自夹具本身
+      const sectionCount = readFileSync(
+        resolve(fixtureDirectory, "table-chart-seam.md"),
+        "utf8"
+      )
+        .split("\n")
+        .filter((line) => line.startsWith("### ")).length;
+      expect(sectionCount, "夹具应当有多个小节").toBeGreaterThan(5);
+      expect(marks.tablesMarked, "带有标题 break-after 标记的表格数").toBe(sectionCount);
+      expect(marks.figuresMarked, "越过表格被标记的图表数").toBe(0);
+      expect(errors).toEqual([]);
+    });
+
+    // 兜底的结果断言：几何上能否命中缺陷取决于字体与页面尺寸，所以这组断言在缺陷存在时
+    // 不一定失败，只用来守住最终输出的完整性。
+    test(`table-chart-seam.md 在 ${themeId} 主题下没有重复行、空页和被推走的表格`, async ({ page }) => {
+      const errors = collectErrors(page);
+      await openSeamFixture(page, themeId);
+
+      const report = await previewFrame(page)
+        .locator(".pagedjs_page")
+        .first()
+        .evaluate((first) => {
+          const doc = first.ownerDocument;
+          const pages = Array.from(doc.querySelectorAll<HTMLElement>(".pagedjs_page"));
+          const rowPages = new Map<string, number[]>();
+          const blankPages: number[] = [];
+          const pushedAwayHeadings: string[] = [];
+          for (const [index, pageElement] of pages.entries()) {
+            const area = pageElement.querySelector<HTMLElement>(".pagedjs_area");
+            if (!area) continue;
+            for (const row of Array.from(
+              area.querySelectorAll<HTMLElement>(
+                '[data-morphdoc-table-row-id][data-morphdoc-table-row-keep-whole="true"]'
+              )
+            )) {
+              const id = row.dataset.morphdocTableRowId!;
+              rowPages.set(id, [...(rowPages.get(id) ?? []), index + 1]);
+            }
+            const hasContent =
+              (area.textContent ?? "").trim().length > 0 ||
+              area.querySelector("img, svg, canvas") !== null;
+            if (!hasContent) blankPages.push(index + 1);
+            for (const heading of Array.from(area.querySelectorAll<HTMLElement>("h3"))) {
+              // 标题之后再没有可见内容：它后面的表格被整体推到了下一页，或者只剩下
+              // 一个被隐藏的空拆分表（表头放得下、首行放不下时 Paged.js 会这样断开）。
+              let hasVisibleFollower = false;
+              for (
+                let next = heading.nextElementSibling;
+                next;
+                next = next.nextElementSibling
+              ) {
+                const box = next.getBoundingClientRect();
+                if (getComputedStyle(next).display !== "none" && box.height > 0.5) {
+                  hasVisibleFollower = true;
+                  break;
+                }
+              }
+              if (!hasVisibleFollower) {
+                pushedAwayHeadings.push(`${heading.textContent?.trim()}@第${index + 1}页`);
+              }
+            }
+          }
+          return {
+            pageCount: pages.length,
+            rowCount: rowPages.size,
+            duplicatedRows: Array.from(rowPages)
+              .filter(([, list]) => list.length > 1)
+              .map(([id, list]) => `${id}@${list.join(",")}`),
+            blankPages,
+            pushedAwayHeadings
+          };
+        });
+
+      // 期望行数取自夹具本身（每个正文行以 | ` 开头）；不一致说明有行丢失或重复
+      const expectedRows = readFileSync(
+        resolve(fixtureDirectory, "table-chart-seam.md"),
+        "utf8"
+      )
+        .split("\n")
+        .filter((line) => line.startsWith("| `")).length;
+      expect(report.rowCount, "表格正文行总数").toBe(expectedRows);
+      expect(report.duplicatedRows, "重复出现的表格行").toEqual([]);
+      expect(report.blankPages, "空白页").toEqual([]);
+      expect(report.pushedAwayHeadings, "表格被整体推走而孤立的标题").toEqual([]);
+      expect(report.pageCount, "夹具应跨多页，否则接缝场景没有被覆盖").toBeGreaterThan(8);
+      expect(errors).toEqual([]);
+    });
+  }
 });
 
 test.describe("预览渲染（视觉基线，仅 Linux）", () => {

@@ -185,6 +185,13 @@ body,
   page-break-after: always !important;
 }
 
+/* 超宽表格压缩单元格横向内边距，见 paged-table-fit.ts；放在主题之后并加 !important 压过主题 */
+#write table[data-morphdoc-table-fit] th,
+#write table[data-morphdoc-table-fit] td {
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
 #write {
   width: 100% !important;
   max-width: none !important;

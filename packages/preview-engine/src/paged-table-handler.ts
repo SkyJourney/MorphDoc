@@ -1,5 +1,12 @@
 import { Handler, registerHandlers } from "pagedjs";
+import { forceBreakBefore } from "./paged-break-control.js";
 import { resolveBreakTokenElement } from "./paged-break-token.js";
+import type { PaginationInvariant } from "./paged-pagination-invariants.js";
+import {
+  fitTableToAvailableWidth,
+  scaleColumnWidthsToFit,
+  type TableFitMeasurements
+} from "./paged-table-fit.js";
 
 interface PagedBreakToken {
   node?: Node;
@@ -88,14 +95,34 @@ function applyCellWidthTracks(
   }
 }
 
+/** `stabilizePagedTableColumns` 的可选行为。 */
+export interface StabilizePagedTableOptions {
+  /**
+   * 是否把比可用宽度更宽的表格收进页面（见 `paged-table-fit.ts`）。
+   * 默认关闭：只有真正呈现给读者的分页才应当开启，DOCX 路径保持原样。
+   */
+  fitToAvailableWidth?: boolean;
+  /** 宽度测量实现，默认读取真实布局；测试时可注入。 */
+  fitMeasurements?: TableFitMeasurements;
+}
+
 export function stabilizePagedTableColumns(
   root: ParentNode,
-  pageContentHeightPx?: number
+  pageContentHeightPx?: number,
+  options: StabilizePagedTableOptions = {}
 ) {
   let stabilizedCount = 0;
   for (const [tableIndex, table] of Array.from(
     root.querySelectorAll<HTMLTableElement>("table")
   ).entries()) {
+    const needsStabilizing =
+      table.dataset.stabilizedColumns !== "true" &&
+      !table.querySelector(":scope > colgroup");
+    // 适配页宽必须先于行高判定：压缩内边距会改变行高，先判定会得到过期的 keepWhole
+    const fit =
+      options.fitToAvailableWidth && needsStabilizing
+        ? fitTableToAvailableWidth(table, options.fitMeasurements)
+        : undefined;
     let bodyRowIndex = 0;
     if (pageContentHeightPx && pageContentHeightPx > 0) {
       for (const row of Array.from(table.rows)) {
@@ -121,13 +148,15 @@ export function stabilizePagedTableColumns(
         }
       }
     }
-    if (
-      table.dataset.stabilizedColumns === "true" ||
-      table.querySelector(":scope > colgroup")
-    ) {
+    if (!needsStabilizing) {
       continue;
     }
-    const widths = measuredColumnWidths(table);
+    const measuredWidths = measuredColumnWidths(table);
+    // 压缩内边距后仍超宽：冻结列宽前把各列按比例缩到可用宽度
+    const widths =
+      fit?.mode === "scaled"
+        ? scaleColumnWidthsToFit(measuredWidths, fit.availableWidth)
+        : measuredWidths;
     const total = widths.reduce((sum, value) => sum + value, 0);
     if (widths.length === 0 || total <= 0) {
       continue;
@@ -164,23 +193,66 @@ export function stabilizePagedTableColumns(
   return stabilizedCount;
 }
 
+/**
+ * 判断分页后的表格行是否在所在页面区域内可见。
+ *
+ * 溢出到页面区域之外的行不算真正渲染出来。
+ *
+ * @param row 分页结果中的表格行
+ * @returns 与页面区域有实际交集时返回 `true`
+ */
+function isVisiblePagedRow(row: HTMLElement) {
+  const pageArea = row.closest<HTMLElement>(".pagedjs_area");
+  if (!pageArea) {
+    return true;
+  }
+  const rowRect = row.getBoundingClientRect();
+  const areaRect = pageArea.getBoundingClientRect();
+  const intersectionWidth = Math.min(rowRect.right, areaRect.right) -
+    Math.max(rowRect.left, areaRect.left);
+  const intersectionHeight = Math.min(rowRect.bottom, areaRect.bottom) -
+    Math.max(rowRect.top, areaRect.top);
+  return intersectionWidth > 0.5 && intersectionHeight > 0.5;
+}
+
+/**
+ * 找出在分页结果中被完整重复排版的表格正文行。
+ *
+ * 判据是同一个行标识下有两个或以上可见实例，且它们的文字内容完全相同。
+ * 这对应 Paged.js 把已经排过的内容又排了一遍（例如断点越过整张表格后重新开始）。
+ *
+ * 两类情形不算重复：
+ *
+ * - 高度超过一页的行本来就允许被切成多段（`keep-whole` 为 `false`）；
+ * - 单元格很高时，Paged.js 可能把整行切成两段，两段文字内容不同，这是
+ *   版面上的瑕疵，但不会让输出多出内容，不应让导出失败。
+ *
+ * @param rendered 分页结果根节点
+ * @returns 被完整重复排版的行标识
+ */
+export function duplicatedPagedTableRowIds(rendered: ParentNode) {
+  const textsById = new Map<string, string[]>();
+  for (const row of Array.from(
+    rendered.querySelectorAll<HTMLElement>(
+      '[data-morphdoc-table-row-id][data-morphdoc-table-row-keep-whole="true"]'
+    )
+  )) {
+    const id = row.dataset.morphdocTableRowId;
+    if (!id || !isVisiblePagedRow(row)) {
+      continue;
+    }
+    const text = (row.textContent ?? "").replace(/\s+/g, " ").trim();
+    textsById.set(id, [...(textsById.get(id) ?? []), text]);
+  }
+  return Array.from(textsById)
+    .filter(([, texts]) => new Set(texts).size < texts.length)
+    .map(([id]) => id);
+}
+
 export function missingPagedTableRowIds(
   source: ParentNode,
   rendered: ParentNode
 ) {
-  const isVisiblePagedRow = (row: HTMLElement) => {
-    const pageArea = row.closest<HTMLElement>(".pagedjs_area");
-    if (!pageArea) {
-      return true;
-    }
-    const rowRect = row.getBoundingClientRect();
-    const areaRect = pageArea.getBoundingClientRect();
-    const intersectionWidth = Math.min(rowRect.right, areaRect.right) -
-      Math.max(rowRect.left, areaRect.left);
-    const intersectionHeight = Math.min(rowRect.bottom, areaRect.bottom) -
-      Math.max(rowRect.top, areaRect.top);
-    return intersectionWidth > 0.5 && intersectionHeight > 0.5;
-  };
   const renderedIds = new Set(
     Array.from(rendered.querySelectorAll<HTMLElement>(
       "[data-morphdoc-table-row-id]"
@@ -195,51 +267,33 @@ export function missingPagedTableRowIds(
     .filter((id) => !renderedIds.has(id));
 }
 
-function splitPagedTableBeforeRow(row: HTMLTableRowElement) {
-  const body = row.parentElement as HTMLTableSectionElement | null;
-  const table = row.closest<HTMLTableElement>("table");
-  if (
-    !body ||
-    body.tagName !== "TBODY" ||
-    !table ||
-    body.querySelector(":scope > tr") === row
-  ) {
-    return table;
-  }
-
-  const continuation = table.cloneNode(false) as HTMLTableElement;
-  continuation.dataset.morphdocTableRecoveryContinuation = "true";
-  for (const child of Array.from(table.children)) {
-    if (child.tagName === "COLGROUP" || child.tagName === "THEAD") {
-      continuation.append(child.cloneNode(true));
-    }
-  }
-
-  const continuationBody = body.cloneNode(false) as HTMLTableSectionElement;
-  let movingRow: HTMLTableRowElement | null = row;
-  while (movingRow) {
-    const nextRow = movingRow.nextElementSibling as HTMLTableRowElement | null;
-    continuationBody.append(movingRow);
-    movingRow = nextRow;
-  }
-  continuation.append(continuationBody);
-
-  let followingSection = body.nextElementSibling;
-  while (followingSection) {
-    const nextSection = followingSection.nextElementSibling;
-    continuation.append(followingSection);
-    followingSection = nextSection;
-  }
-  table.after(continuation);
-  return continuation;
+/** 表格行恢复的结果。 */
+export interface PagedTableRowRecoveryResult {
+  /** 在源文档中定位到的行数。 */
+  located: number;
+  /** 本次新增了强制分页的行数；此前已经施加过的不重复计数。 */
+  added: number;
 }
 
+/**
+ * 让指定的表格正文行从下一页开始。
+ *
+ * 通过 `forceBreakBefore` 表达分页意图，由共享 CSS 映射后交给 Paged.js：
+ *
+ * - 缺失的是整张表的第一行时，表头此前已经排在上一页，应让整张表换页，
+ *   否则会留下只有表头的残页；
+ * - 其他情形只让该行换页，续页上的表头由 `RepeatTableHeadersHandler`
+ *   自动重复。
+ *
+ * @param source 重新分页所用的源文档
+ * @param rowIds 需要换页的行标识（`data-morphdoc-table-row-id`）
+ */
 export function forcePagedTableRowsToNextPage(
   source: ParentNode,
   rowIds: readonly string[]
-) {
+): PagedTableRowRecoveryResult {
   const requested = new Set(rowIds);
-  let count = 0;
+  const result: PagedTableRowRecoveryResult = { located: 0, added: 0 };
   for (const row of source.querySelectorAll<HTMLTableRowElement>(
     "tbody > tr[data-morphdoc-table-row-id]"
   )) {
@@ -247,39 +301,55 @@ export function forcePagedTableRowsToNextPage(
     if (!id || !requested.has(id)) {
       continue;
     }
-    const table = splitPagedTableBeforeRow(row);
-    let recoveryTarget: HTMLElement = row;
-    if (table?.parentNode) {
-      const previous = table.previousElementSibling as HTMLElement | null;
-      const marker = previous?.dataset.morphdocTableRecoveryMarker === "true"
-        ? previous
-        : table.ownerDocument.createElement("div");
-      if (marker !== previous) {
-        marker.dataset.morphdocTableRecoveryMarker = "true";
-        marker.setAttribute("aria-hidden", "true");
-        marker.textContent = "\u00a0";
-        marker.style.setProperty("height", "1px", "important");
-        marker.style.setProperty("line-height", "1px", "important");
-        marker.style.setProperty("margin", "0 0 -1px", "important");
-        marker.style.setProperty("padding", "0", "important");
-        marker.style.setProperty("border", "0", "important");
-        marker.style.setProperty("overflow", "hidden", "important");
-        marker.style.setProperty("opacity", "0", "important");
-        table.parentNode.insertBefore(marker, table);
-      }
-      recoveryTarget = marker;
-      table.dataset.morphdocTableRecovery = "true";
+    result.located += 1;
+    const table = row.closest<HTMLTableElement>("table");
+    const isFirstRowOfTable =
+      table !== null && table.querySelector("tbody > tr") === row;
+    const target: Element = isFirstRowOfTable ? table : row;
+    if (forceBreakBefore(target)) {
+      result.added += 1;
     }
-    recoveryTarget.style.setProperty("break-before", "page", "important");
-    recoveryTarget.style.setProperty(
-      "page-break-before",
-      "always",
-      "important"
-    );
     row.dataset.morphdocTableRowRecovery = "true";
-    count += 1;
   }
-  return count;
+  return result;
+}
+
+/** 表格正文行丢失不变量的标识。 */
+export const TABLE_ROW_MISSING_INVARIANT_ID = "table-row-missing";
+
+/** 表格正文行整行重复不变量的标识。 */
+export const TABLE_ROW_DUPLICATED_INVARIANT_ID = "table-row-duplicated";
+
+/**
+ * 表格相关的分页不变量。
+ *
+ * - 整行保持不拆的正文行不得丢失：违反时让缺失的行换页后重排；
+ * - 整行保持不拆的正文行不得被完整重复排版：只检测，无法通过换页修复。
+ */
+export function createTableRowInvariants(): PaginationInvariant[] {
+  return [
+    {
+      id: TABLE_ROW_MISSING_INVARIANT_ID,
+      title: "分页后表格正文行缺失",
+      detect: ({ source, rendered }) =>
+        missingPagedTableRowIds(source, rendered),
+      repair: ({ source }, rowIds) => {
+        const result = forcePagedTableRowsToNextPage(source, rowIds);
+        if (result.located !== rowIds.length) {
+          throw new Error(
+            `分页表格行恢复标记不完整：缺失 ${rowIds.length} 行，` +
+              `仅定位 ${result.located} 行`
+          );
+        }
+        return result.added;
+      }
+    },
+    {
+      id: TABLE_ROW_DUPLICATED_INVARIANT_ID,
+      title: "分页后表格正文行重复",
+      detect: ({ rendered }) => duplicatedPagedTableRowIds(rendered)
+    }
+  ];
 }
 
 export function restorePagedTableStructure(

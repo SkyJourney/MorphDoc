@@ -20,6 +20,10 @@ import { fileURLToPath } from "node:url";
 
 export const defaultSeed = 20260729;
 
+/** 表格分页接缝夹具的默认种子与小节数（静态夹具即由此生成）。 */
+export const tableChartSeamSeed = 2;
+export const tableChartSeamSections = 12;
+
 /**
  * mulberry32 伪随机数生成器：体积小、分布足够均匀、跨平台结果一致。
  *
@@ -187,6 +191,86 @@ export function generateStressFixtures(seed = defaultSeed) {
 }
 
 /** 把 LF 换行的文本转换为 CRLF（先归一化，避免出现 \r\r\n）。 */
+/**
+ * 表格分页接缝夹具：小节标题后**直接**接长表格，表格后紧随一张图表。
+ *
+ * 这个结构专门用来触发 Paged.js 的一个断点回退缺陷：标题的 `break-after: avoid`
+ * 越过表格落到其后的图表上，表格跨页后图表放不下时，断点回退到整张表之前，表现为
+ * 续页从表格第一行重新开始（表格行重复）、空白页和孤立的标题。
+ *
+ * 触发需要同时满足：标题后没有段落隔开；表格足够长、会跨页；表格之后是放不下的图表。
+ * 每个小节前的填充段落数不同，让表格的起始位置落在页面的各种偏移上。
+ *
+ * 同一种子永远产出逐字节相同的内容。`fixtures/markdown/static/table-chart-seam.md`
+ * 由本函数以默认参数生成；修改本函数后需要重新生成该文件，漂移由单元测试守住。
+ *
+ * @param {{ seed?: number, sections?: number }} [options] 种子与小节数
+ * @returns {string} Markdown 文本，以单个换行结尾
+ */
+export function generateTableChartSeam({
+  seed = tableChartSeamSeed,
+  sections = tableChartSeamSections
+} = {}) {
+  const random = createRandom(seed);
+  const names = [
+    "中际旭创", "天孚通信", "紫光股份", "新易盛", "中芯国际", "中兴通讯", "国电南瑞", "麦格米特"
+  ];
+  const headers = [
+    "代码", "简称", "细分环节", "研报数", "收盘(元)", "PE_TTM", "26E EPS", "27E EPS",
+    "28E EPS", "26E PE", "27E PE", "28E PE", "CAGR%", "目标价", "剩余空间%"
+  ];
+  const figure = (index) => [
+    "```echarts",
+    "version: 1",
+    "height: 98mm",
+    `caption: 图 ${index}：示意图`,
+    "option:",
+    "  xAxis:",
+    "    type: category",
+    "    data: [甲, 乙, 丙, 丁]",
+    "  yAxis:",
+    "    type: value",
+    "  series:",
+    "    - type: bar",
+    `      data: [${(index % 9) + 3}, ${(index % 7) * 2 + 1}, ${(index % 5) + 7}, ${index % 11}]`,
+    "```",
+    ""
+  ];
+  const lines = [
+    "# 表格分页接缝回归",
+    "",
+    "固定种子生成的确定内容：小节标题后直接接长表格，表格之后紧随图表。",
+    ""
+  ];
+  for (let index = 1; index <= sections; index += 1) {
+    const fillers = between(random, 0, 8);
+    for (let filler = 0; filler < fillers; filler += 1) {
+      lines.push(
+        `填充段落 ${index}-${filler}：用于改变后续内容在页面中的起始位置，使表格与图表的接缝落在不同位置。这是一段稍长的说明文字，占据两行左右的版面。`,
+        ""
+      );
+    }
+    lines.push(`## 第 ${index} 章`, "", `### ${index}.1 卖方一致预期`, "");
+    const rows = between(random, 10, 40);
+    lines.push(
+      `| ${headers.join(" | ")} |`,
+      `|:---|:---|:---|${headers.slice(3).map(() => "---:|").join("")}`
+    );
+    for (let row = 1; row <= rows; row += 1) {
+      const value = (offset) =>
+        ((((index * 31 + row * 37 + offset * 11) % 900) / 10) + 1).toFixed(2);
+      lines.push(
+        `| \`${300000 + index * 100 + row}.SZ\` | **${names[(index + row) % names.length]}** | ` +
+          `C${(row % 3) + 1}.光引擎/交换芯片 | ${3 + (row % 12)} | ` +
+          `${[1, 2, 3, 4, 5, 6, 7, 8].map(value).join(" | ")} | ` +
+          `+${value(9)} | ${value(10)} | +${value(11)}% |`
+      );
+    }
+    lines.push("", ...figure(index));
+  }
+  return `${lines.join("\n").replace(/\n+$/u, "")}\n`;
+}
+
 export function toCrlf(text) {
   return text.replace(/\r\n/gu, "\n").replace(/\n/gu, "\r\n");
 }
