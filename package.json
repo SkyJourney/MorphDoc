@@ -1,6 +1,6 @@
 {
   "name": "morphdoc",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "private": true,
   "license": "Apache-2.0",
   "description": "面向结构化 Markdown 的主题化文档创作与发布工具",
